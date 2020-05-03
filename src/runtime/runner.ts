@@ -35,9 +35,6 @@ export async function run() {
         setEnvironment(getEnvironment)
     }
 
-    // Add dependent listeners
-    await import("../authentication/identity/execute")
-
     await dispatchEvent({
         type: ConfigureEventType,
         environment

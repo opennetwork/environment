@@ -1,7 +1,9 @@
-import {IdentityStore} from "../authentication/authentication"
+import {getEnvironment} from "./environment"
+
+export const EnvironmentContextSymbol = Symbol("Environment Context")
 
 declare interface EnvironmentContext {
-    identity: IdentityStore
+    type: typeof EnvironmentContextSymbol
     [key: string]: unknown
     [key: number]: unknown
 }
@@ -10,8 +12,13 @@ export {
     EnvironmentContext
 }
 
-export function createContext(): EnvironmentContext {
+export function createEnvironmentContext(): EnvironmentContext {
     return {
-        identity: new IdentityStore()
+        type: EnvironmentContextSymbol
     }
+}
+
+export function getEnvironmentContext(): EnvironmentContext | undefined {
+    const environment = getEnvironment()
+    return environment ? environment.context : undefined
 }

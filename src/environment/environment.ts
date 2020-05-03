@@ -1,8 +1,9 @@
 import {EventCallback, EventTarget, Event} from "../events/events"
 import {ConfigureEvent, ConfigureEventType, EnvironmentEventTarget, ExecuteEvent, ExecuteEventType} from "./events"
-import {EnvironmentContext, createContext} from "./context"
+import {EnvironmentContext, createEnvironmentContext} from "./context"
 
 export * from "./events"
+export * from "./context"
 
 export interface Environment extends EnvironmentEventTarget {
     name: string
@@ -12,7 +13,7 @@ export interface Environment extends EnvironmentEventTarget {
 
 export class Environment extends EnvironmentEventTarget implements Environment {
 
-    constructor(public name: string, public context: EnvironmentContext = createContext()) {
+    constructor(public name: string, public context: EnvironmentContext = createEnvironmentContext()) {
         super(context);
     }
 
