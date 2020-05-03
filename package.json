@@ -1,0 +1,28 @@
+{
+  "type": "module",
+  "name": "@opennetwork/environment",
+  "version": "1.0.0",
+  "description": "Cross platform JavaScript environment",
+  "main": "esnext/index.js",
+  "exports": "esnext/index.js",
+  "author": "Fabian Cook <hello@fabiancook.dev>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^13.13.4",
+    "commander": "^5.1.0",
+    "esm": "^3.2.25",
+    "filehound": "^1.17.4",
+    "typescript": "^3.8.3"
+  },
+  "scripts": {
+    "build": "rm -rf esnext && mkdir esnext && tsc && npm run postbuild",
+    "postbuild": "node scripts/post-build.js",
+    "example": "node scripts/example.node.js"
+  },
+  "esm": {
+    "cjs": true,
+    "mode": "auto",
+    "await": true
+  }
+}
