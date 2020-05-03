@@ -1,5 +1,3 @@
-import {isRunningNode} from "./node/is-running";
-import {isRunningAWSLambda} from "./aws-lambda/is-running";
 import {
     ConfigureEventType,
     dispatchEvent,
@@ -7,7 +5,10 @@ import {
     ExecuteEventType,
     setEnvironment
 } from "../environment/environment"
-import {isRunningBrowser} from "./browser/is-running";
+import {isRunningNode} from "./node/is-running"
+import {isRunningAWSLambda} from "./aws-lambda/is-running"
+import {isRunningBrowser} from "./browser/is-running"
+import {isRunningReactNative} from "./react-native/is-running"
 
 async function getRuntimeEnvironment(): Promise<Environment> {
     if (isRunningNode()) {
@@ -20,6 +21,9 @@ async function getRuntimeEnvironment(): Promise<Environment> {
         }
     } else if (isRunningBrowser()) {
         const { Environment } = await import("./browser/browser")
+        return new Environment()
+    } else if (isRunningReactNative()) {
+        const { Environment } = await import("./react-native/react-native")
         return new Environment()
     }
     throw new Error("Unknown environment")
