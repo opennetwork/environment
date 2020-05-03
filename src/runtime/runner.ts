@@ -9,9 +9,13 @@ import {isRunningNode} from "./node/is-running"
 import {isRunningAWSLambda} from "./aws-lambda/is-running"
 import {isRunningBrowser} from "./browser/is-running"
 import {isRunningReactNative} from "./react-native/is-running"
+import {isRunningCloudflare} from "./cloudflare/is-running";
 
 async function getRuntimeEnvironment(): Promise<Environment> {
-    if (isRunningNode()) {
+    if (isRunningCloudflare()) {
+        const { Environment } = await import("./cloudflare/cloudflare")
+        return new Environment()
+    } else if (isRunningNode()) {
         if (isRunningAWSLambda()) {
             const { Environment } = await import("./aws-lambda/aws-lambda")
             return new Environment()
