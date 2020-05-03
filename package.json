@@ -24,5 +24,8 @@
     "cjs": true,
     "mode": "auto",
     "await": true
+  },
+  "engines": {
+    "node": ">=14.1.0"
   }
 }
