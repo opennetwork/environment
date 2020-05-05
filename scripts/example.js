@@ -1,5 +1,9 @@
 import { addEventListener, ExecuteEventType, ConfigureEventType, getEnvironment, getEnvironmentContext } from "../esnext/index.js"
 
+addEventListener("*", function (event) {
+  console.log({ wildcardEvent: event })
+})
+
 addEventListener("Custom event!", function(event) {
   console.log(event)
 })
