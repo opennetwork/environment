@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+"@opennetwork/http-representation-node@^2.0.4":
+  version "2.0.4"
+  resolved "https://registry.npmjs.org/@opennetwork/http-representation-node/-/http-representation-node-2.0.4.tgz#7382b6a0f43b5facad46353b7140f70d0498e1a5"
+  integrity sha512-otTc2H0TZO0Z14PUFOfcoWXvWnkrYHG5yD5a28l9ZgPvKIg6dF6GvgZpIotesoRN6mlpwLj+phzcJOEIi0EStA==
+
+"@opennetwork/http-representation@^2.0.25":
+  version "2.0.25"
+  resolved "https://registry.npmjs.org/@opennetwork/http-representation/-/http-representation-2.0.25.tgz#6b1a2fee7066f7de68f6d0ce3449d72df0b20479"
+  integrity sha512-lqtmlqSQ7cLuTx2SwvHtXJleVi4b0gJAJjVs+t0WKB6H1XdzrA/L3xkVmJIxodtfywYAg3xmQCodQ9Pzp2dMcQ==
+
 "@types/node@^13.13.4":
   version "13.13.4"
   resolved "https://registry.npmjs.org/@types/node/-/node-13.13.4.tgz#1581d6c16e3d4803eb079c87d4ac893ee7501c2c"

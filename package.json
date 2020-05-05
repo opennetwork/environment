@@ -27,5 +27,9 @@
   },
   "engines": {
     "node": ">=14.1.0"
+  },
+  "dependencies": {
+    "@opennetwork/http-representation": "^2.0.25",
+    "@opennetwork/http-representation-node": "^2.0.4"
   }
 }

@@ -1,5 +1,6 @@
 import { Environment as EnvironmentTemplate } from "../../environment/environment"
 import { AsyncLocalStorage } from "async_hooks"
+import { start as startFetchService } from "./fetch-service"
 
 const localStorage = new AsyncLocalStorage<Environment>()
 
@@ -24,6 +25,12 @@ export class Environment extends EnvironmentTemplate {
 
     static getEnvironment(): Environment | undefined {
         return localStorage.getStore()
+    }
+
+    async configure() {
+
+        await startFetchService()
+
     }
 
 }
