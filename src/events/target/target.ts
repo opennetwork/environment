@@ -49,9 +49,10 @@ export class EventTarget implements EventTarget {
     }
 
     async dispatchEvent(event: Event) {
-        const listeners = this.listeners[event.type]
+        const wildcardListeners = this.listeners["*"] || []
+        const listeners = (this.listeners[event.type] || []).concat(wildcardListeners)
         console.log(`Dispatching event ${event.type}`, listeners, this.thisValue, event)
-        if (!(listeners && listeners.length)) {
+        if (!listeners.length) {
             return
         }
         for (const fn of listeners) {
