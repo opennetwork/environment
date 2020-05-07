@@ -1,9 +1,10 @@
 import { Event } from "../event/event"
 import { Environment, getEnvironment } from "../../environment/environment"
 import { getParentEvent, runWithParentEvent } from "../event/parent"
-import {getEventContext} from "../event/context"
-import {EventCallback} from "../event/callback"
-import {EventDescriptor} from "../event/descriptor"
+import { getEventContext, EventListener } from "../event/context"
+import { EventCallback } from "../event/callback"
+import { EventDescriptor } from "../event/descriptor"
+import { matchEventCallback } from "../event/callback";
 
 export {
     EventCallback
@@ -21,10 +22,6 @@ export type RemoveEventListenerFn = EventTarget["removeEventListener"]
 export type DispatchEventListenerFn = EventTarget["dispatchEvent"]
 export type HasEventListenerFn = EventTarget["hasEventListener"]
 
-function matchEventCallback(type: string, callback?: EventCallback): (descriptor: EventDescriptor) => boolean {
-    return descriptor => (!callback || callback === descriptor.callback) && type === descriptor.type
-}
-
 export class EventTarget implements EventTarget {
 
     #listeners: EventDescriptor[] = []
@@ -37,14 +34,22 @@ export class EventTarget implements EventTarget {
     }
 
     addEventListener(type: string, callback: EventCallback) {
-        const hasListener = !!this.#listeners.find(matchEventCallback(type, callback))
-        if (hasListener) {
+        const listener: EventListener = {
+            isListening: () => !!this.#listeners.find(matchEventCallback(type, callback)),
+            descriptor: {
+                type,
+                callback
+            }
+        }
+        if (listener.isListening()) {
             return
         }
-        this.#listeners.push({
-            callback,
-            type
-        })
+        this.#listeners.push(listener.descriptor)
+        const parentEvent = getParentEvent()
+        if (parentEvent) {
+            const parentEventContext = getEventContext(parentEvent)
+            parentEventContext.listeners.push(listener)
+        }
     }
 
     removeEventListener(type: string, callback: EventCallback) {
@@ -58,13 +63,10 @@ export class EventTarget implements EventTarget {
     async dispatchEvent(event: Event) {
         const listeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
         const parentEvent = getParentEvent()
+        const environment = this.#environment || getEnvironment()
 
         if (!listeners.length) {
             if (!parentEvent) {
-                return
-            }
-            const environment = this.#environment || getEnvironment()
-            if (!environment) {
                 return
             }
             const parentEventContext = getEventContext(parentEvent)
@@ -76,7 +78,6 @@ export class EventTarget implements EventTarget {
 
         await runWithParentEvent(event, async () => {
             for (const descriptor of listeners) {
-                const environment = this.#environment || getEnvironment()
                 if (environment && parentEvent) {
                     const parentEventContext = getEventContext(parentEvent)
                     parentEventContext.dispatchedEvents.push({

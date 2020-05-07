@@ -44,6 +44,7 @@ function dispatchMap(event) {
 
   return {
     event,
+    context,
     children: context.dispatchedEvents.map(({ event }) => dispatchMap(event))
   }
 }

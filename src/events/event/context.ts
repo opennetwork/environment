@@ -8,7 +8,13 @@ export interface DispatchedEvent {
     target: unknown
 }
 
+export interface EventListener {
+    isListening(): boolean
+    descriptor: EventDescriptor
+}
+
 export interface EventContext {
+    listeners: EventListener[]
     dispatchedEvents: DispatchedEvent[]
 }
 
@@ -33,7 +39,8 @@ export function getEventContext(event: Event) {
 
     if (!eventContext) {
         eventContext = {
-            dispatchedEvents: []
+            dispatchedEvents: [],
+            listeners: []
         }
         environmentEventContext.set(event, eventContext)
     }
