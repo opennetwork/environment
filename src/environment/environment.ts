@@ -1,11 +1,18 @@
 import {EventCallback, Event, EventTarget} from "../events/events"
 import {
-    CompleteEvent, CompleteEventType,
+    CompleteEvent,
+    CompleteEventType,
     ConfigureEvent,
     ConfigureEventType,
     EnvironmentEventTarget,
+    ErrorEventType,
     ExecuteEvent,
-    ExecuteEventType, FetchEvent, FetchEventType
+    ExecuteEventType,
+    FetchEvent,
+    FetchEventType,
+    RenderEvent,
+    RenderEventType,
+    ErrorEvent
 } from "./events"
 import {EnvironmentContext, createEnvironmentContext} from "./context"
 
@@ -88,7 +95,9 @@ export function addEventListener(type: typeof FetchEventType, callback: EventCal
 export function addEventListener(type: typeof ExecuteEventType, callback: EventCallback<ExecuteEvent, EnvironmentContext>): void
 export function addEventListener(type: typeof ConfigureEventType, callback: EventCallback<ConfigureEvent, EnvironmentContext>): void
 export function addEventListener(type: typeof CompleteEventType, callback: EventCallback<CompleteEvent, EnvironmentContext>): void
-export function addEventListener(type: string, callback: EventCallback<Event>): void
+export function addEventListener(type: typeof ErrorEventType, callback: EventCallback<ErrorEvent, EnvironmentContext>): void
+export function addEventListener(type: typeof RenderEventType, callback: EventCallback<RenderEvent, EnvironmentContext>): void
+export function addEventListener(type: string, callback: EventCallback): void
 export function addEventListener(type: string, callback: EventCallback<any>): void {
     defaultEventTarget.addEventListener(type, callback)
 }

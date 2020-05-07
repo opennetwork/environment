@@ -1,6 +1,7 @@
 import {Event, EventCallback, EventTarget} from "../events/events"
 import {Environment} from "./environment"
 import {Request, Response} from "@opennetwork/http-representation"
+import {RenderFunction} from "../render/render-function";
 
 export const EnvironmentEventNamespace = "@opennetwork/environment"
 
@@ -31,19 +32,26 @@ export interface ErrorEvent extends Event<typeof ErrorEventType> {
     error: Error
 }
 
+export const RenderEventType = "render"
+export interface RenderEvent extends Event<typeof RenderEventType> {
+    render(fn: RenderFunction): Promise<void>
+}
+
 export type EnvironmentEvent =
     | ConfigureEvent
     | ExecuteEvent
     | CompleteEvent
     | ErrorEvent
     | FetchEvent
+    | RenderEvent
 
 export const EnvironmentEvents: EnvironmentEvent["type"][] = [
     ExecuteEventType,
     ConfigureEventType,
     FetchEventType,
     CompleteEventType,
-    ErrorEventType
+    ErrorEventType,
+    RenderEventType
 ]
 
 export function isEnvironmentEvent(value: Event): value is EnvironmentEvent {
