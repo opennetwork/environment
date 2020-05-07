@@ -1,26 +1,18 @@
 import { Environment as EnvironmentTemplate } from "../../environment/environment"
 import { AsyncLocalStorage } from "async_hooks"
 import { start as startFetchService } from "./fetch-service"
+import { createLocalStorage } from "../../local-storage";
 
-const localStorage = new AsyncLocalStorage<Environment>()
+const localStorage = createLocalStorage<Environment>()
 
 export class Environment extends EnvironmentTemplate {
 
     constructor(name: string = "node") {
         super(name);
-        localStorage.enterWith(this)
     }
 
     async runInAsyncScope(fn: () => void | Promise<void>) {
-        return new Promise<void>(
-        (resolve, reject) => localStorage.run(
-            this,
-            () => Promise.resolve()
-                    .then(() => fn())
-                    .then(resolve)
-                    .catch(reject)
-            )
-        )
+        return localStorage.run(this, fn)
     }
 
     static getEnvironment(): Environment | undefined {
@@ -28,9 +20,7 @@ export class Environment extends EnvironmentTemplate {
     }
 
     async configure() {
-
         this.addService(startFetchService())
-
     }
 
 

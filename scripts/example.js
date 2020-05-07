@@ -1,4 +1,4 @@
-import { addEventListener, ExecuteEventType, ConfigureEventType, getEnvironment, getEnvironmentContext } from "../esnext/index.js"
+import { addEventListener, ExecuteEventType, ConfigureEventType, dispatchEvent, getEnvironmentContext, getEventContext } from "../esnext/index.js"
 import { Response } from "@opennetwork/http-representation"
 
 // addEventListener("*", function (event) {
@@ -16,8 +16,10 @@ addEventListener("fetch", function (event) {
   }))
 })
 
-addEventListener("Custom event!", function(event) {
-  console.log(event)
+addEventListener("Custom event!", async function(event) {
+  console.log(event, getEnvironmentContext())
+
+  await dispatchEvent({ type: "Some other event" })
 })
 
 addEventListener(ConfigureEventType, async function configure(event) {
@@ -31,7 +33,20 @@ addEventListener(ConfigureEventType, async function configure(event) {
 
 addEventListener(ExecuteEventType, async function handler(event) {
   console.log({ context: getEnvironmentContext() })
+  await dispatchEvent({ type: "Custom event!" })
+
+  console.log(JSON.stringify(dispatchMap(event)))
+
 })
+
+function dispatchMap(event) {
+  const context = getEventContext(event)
+
+  return {
+    event,
+    children: context.dispatchedEvents.map(({ event }) => dispatchMap(event))
+  }
+}
 
 export default import("../esnext/runtime/run.js")
   .then(({ default: promise }) => promise)

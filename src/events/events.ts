@@ -1,2 +1,5 @@
 export * from "./event/event"
+export * from "./event/context"
+export * from "./event/parent"
+export * from "./event/descriptor"
 export * from "./target/target"
