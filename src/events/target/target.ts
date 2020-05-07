@@ -1,5 +1,5 @@
 import { Event } from "../event/event"
-import {Environment, getEnvironment} from "../../environment/environment"
+import { Environment, getEnvironment } from "../../environment/environment"
 
 export interface EventCallback<TargetEvent extends Event = Event, This = unknown> {
     (this: This, event: TargetEvent): Promise<void> | void
@@ -9,7 +9,7 @@ export interface EventTarget<This = unknown> {
     addEventListener(type: string, callback: EventCallback<Event, This>): void
     removeEventListener(type: string, callback: EventCallback<Event, This>): void
     dispatchEvent(event: Event): void | Promise<void>
-    hasEventListener(type: string): Promise<boolean>
+    hasEventListener(type: string, callback?: EventCallback): Promise<boolean>
 }
 
 export type AddEventListenerFn = EventTarget["addEventListener"]
@@ -17,9 +17,21 @@ export type RemoveEventListenerFn = EventTarget["removeEventListener"]
 export type DispatchEventListenerFn = EventTarget["dispatchEvent"]
 export type HasEventListenerFn = EventTarget["hasEventListener"]
 
+let increment = 0
+
+export interface EventDescriptor {
+    sequence: number
+    type: string
+    callback: EventCallback
+}
+
+function matchEventCallback(type: string, callback?: EventCallback): (descriptor: EventDescriptor) => boolean {
+    return descriptor => (!callback || callback === descriptor.callback) && type === descriptor.type
+}
+
 export class EventTarget implements EventTarget {
 
-    #listeners: Record<string, EventCallback[]> = {}
+    #listeners: EventDescriptor[] = []
     #thisValue: unknown
     #environment: Environment | undefined
 
@@ -28,50 +40,46 @@ export class EventTarget implements EventTarget {
         this.#environment = environment
     }
 
-    addEventListener(name: string, callback: EventCallback) {
-        let listeners = this.#listeners[name] || []
-        if (listeners.includes(callback)) {
+    addEventListener(type: string, callback: EventCallback) {
+        const hasListener = !!this.#listeners.find(matchEventCallback(type, callback))
+        if (hasListener) {
             return
         }
-        listeners = listeners.slice()
-        listeners.push(callback)
-        this.#listeners[name] = listeners
+        increment += 1
+        this.#listeners.push({
+            sequence: increment,
+            callback,
+            type
+        })
     }
 
-    removeEventListener(name: string, callback: EventCallback) {
-        let listeners = this.#listeners[name]
-        if (!listeners) {
-            return
-        }
-        const index = listeners.indexOf(callback)
+    removeEventListener(type: string, callback: EventCallback) {
+        const index = this.#listeners.findIndex(matchEventCallback(type, callback))
         if (index === -1) {
             return
         }
-        listeners = listeners.slice()
-        listeners.splice(index, 1)
-        this.#listeners[name] = listeners
+        this.#listeners.splice(index, 1)
     }
 
     async dispatchEvent(event: Event) {
-        const wildcardListeners = this.#listeners["*"] || []
-        const listeners = (this.#listeners[event.type] || []).concat(wildcardListeners)
+        const listeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
         if (!listeners.length) {
             return
         }
-        for (const fn of listeners) {
+        for (const descriptor of listeners) {
             const environment = this.#environment || getEnvironment()
             if (environment) {
                 await environment.runInAsyncScope(async () => {
-                    await fn.call(this.#thisValue, event)
+                    await descriptor.callback.call(this.#thisValue, event)
                 })
             } else {
-                await fn.call(this.#thisValue, event)
+                await descriptor.callback.call(this.#thisValue, event)
             }
         }
     }
 
-    async hasEventListener(type: string) {
-        const listeners = this.#listeners[type]
-        return !!(listeners && listeners.length)
+    async hasEventListener(type: string, callback?: EventCallback) {
+        const foundIndex = this.#listeners.findIndex(matchEventCallback(type, callback))
+        return foundIndex > -1
     }
 }

@@ -84,7 +84,6 @@ export class Environment extends EnvironmentEventTarget implements Environment {
             ...environments.map(environment => environment.waitForServices())
         ])
         services.forEach(this.#removeService)
-        console.log(services)
     }
 
 }
