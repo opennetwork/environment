@@ -1,7 +1,7 @@
 import {Event, EventCallback, EventTarget} from "../events/events"
 import {Environment} from "./environment"
 import {Request, Response} from "@opennetwork/http-representation"
-import {RenderFunction} from "../render/render-function";
+import {RenderFunction} from "../render/render-function"
 
 export const EnvironmentEventNamespace = "@opennetwork/environment"
 

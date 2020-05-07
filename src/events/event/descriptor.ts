@@ -1,4 +1,4 @@
-import {EventCallback} from "./callback";
+import {EventCallback} from "./callback"
 
 export interface EventDescriptor {
     type: string

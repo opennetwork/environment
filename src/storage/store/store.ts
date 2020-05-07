@@ -1,4 +1,4 @@
-import {EventTarget} from "../../events/events";
+import {EventTarget} from "../../events/events"
 import {
     CreatedEvent,
     CreatedEventType,
@@ -12,7 +12,7 @@ import {
     UpdatedEventType,
     UpdatingEvent,
     UpdatingEventType
-} from "./events";
+} from "./events"
 
 export interface Store<Key extends string = string, Value = unknown> extends AsyncIterable<[Key, Value]> {
     ["__key"]: Key
@@ -69,7 +69,7 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
             }
             await this.dispatchEvent(event)
         }
-        this.#defaultMap.set(key, value);
+        this.#defaultMap.set(key, value)
         if (hasPreviousValue === false) {
             const event: CreatedEvent<Key, Value> = {
                 type: CreatedEventType,

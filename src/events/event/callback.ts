@@ -1,5 +1,5 @@
 import {Event} from "./event"
-import {EventDescriptor} from "./descriptor";
+import {EventDescriptor} from "./descriptor"
 
 export interface EventCallback<TargetEvent extends Event = Event, This = unknown> {
     (this: This, event: TargetEvent): Promise<void> | void

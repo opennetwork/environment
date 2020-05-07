@@ -1,6 +1,6 @@
 import { Event } from "./event"
 import { createLocalStorage } from "../../local-storage"
-import {getEnvironment} from "../../environment/environment";
+import { getEnvironment } from "../../environment/environment"
 
 const localStorage = createLocalStorage<Event>()
 

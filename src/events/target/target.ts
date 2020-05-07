@@ -4,7 +4,7 @@ import { getParentEvent, runWithParentEvent } from "../event/parent"
 import { getEventContext, EventListener } from "../event/context"
 import { EventCallback } from "../event/callback"
 import { EventDescriptor } from "../event/descriptor"
-import { matchEventCallback } from "../event/callback";
+import { matchEventCallback } from "../event/callback"
 
 export {
     EventCallback

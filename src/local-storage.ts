@@ -1,5 +1,3 @@
-import {Event} from "./events/event/event";
-
 export interface SyncLocalStorage<T> {
     run(value: T, callback: () => void): void
     getStore(): T | undefined

@@ -1,9 +1,9 @@
-import { Environment as EnvironmentTemplate } from "../node/node";
+import { Environment as EnvironmentTemplate } from "../node/node"
 
 export class Environment extends EnvironmentTemplate {
 
     constructor() {
-        super("node/aws-lambda");
+        super("node/aws-lambda")
     }
 
 }
