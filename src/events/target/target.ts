@@ -1,5 +1,5 @@
 import { Event } from "../event/event"
-import { Environment } from "../../environment/environment"
+import {Environment, getEnvironment} from "../../environment/environment"
 
 export interface EventCallback<TargetEvent extends Event = Event, This = unknown> {
     (this: This, event: TargetEvent): Promise<void> | void
@@ -56,8 +56,9 @@ export class EventTarget implements EventTarget {
             return
         }
         for (const fn of listeners) {
-            if (this.environment) {
-                await this.environment.runInAsyncScope(async () => {
+            const environment = this.environment || getEnvironment()
+            if (environment) {
+                await environment.runInAsyncScope(async () => {
                     await fn.call(this.thisValue, event)
                 })
             } else {

@@ -2,20 +2,20 @@
 # yarn lockfile v1
 
 
-"@opennetwork/http-representation-node@^2.0.4":
-  version "2.0.4"
-  resolved "https://registry.npmjs.org/@opennetwork/http-representation-node/-/http-representation-node-2.0.4.tgz#7382b6a0f43b5facad46353b7140f70d0498e1a5"
-  integrity sha512-otTc2H0TZO0Z14PUFOfcoWXvWnkrYHG5yD5a28l9ZgPvKIg6dF6GvgZpIotesoRN6mlpwLj+phzcJOEIi0EStA==
+"@opennetwork/http-representation-node@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/@opennetwork/http-representation-node/-/http-representation-node-3.0.0.tgz#5e9df9e2126fa9c5d99b84e5425129655d0b9c02"
+  integrity sha512-ZqNOQBSjQCztyTJOuJVewRcgcOHcUM7T3GFWn9ZNN+y6G4NLNdqG+vkp5Zv1n6fwUofhfkuxisXXRnl4zDkkHw==
 
-"@opennetwork/http-representation@^2.0.25":
-  version "2.0.25"
-  resolved "https://registry.npmjs.org/@opennetwork/http-representation/-/http-representation-2.0.25.tgz#6b1a2fee7066f7de68f6d0ce3449d72df0b20479"
-  integrity sha512-lqtmlqSQ7cLuTx2SwvHtXJleVi4b0gJAJjVs+t0WKB6H1XdzrA/L3xkVmJIxodtfywYAg3xmQCodQ9Pzp2dMcQ==
+"@opennetwork/http-representation@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/@opennetwork/http-representation/-/http-representation-3.0.0.tgz#5665ee2a5900dc53cff207aef491144bed0ce32f"
+  integrity sha512-g3davRpiR4m9vMhEtocjiENRBgJRnzNd9tWmO2b9E0z9Je5iVmMuzLvTqdP0p+Ew9RIbIEaC+ayEalIkLVgKOQ==
 
 "@types/node@^13.13.4":
-  version "13.13.4"
-  resolved "https://registry.npmjs.org/@types/node/-/node-13.13.4.tgz#1581d6c16e3d4803eb079c87d4ac893ee7501c2c"
-  integrity sha512-x26ur3dSXgv5AwKS0lNfbjpCakGIduWU1DU91Zz58ONRWrIKGunmZBNv4P7N+e27sJkiGDsw/3fT4AtsqQBrBA==
+  version "13.13.5"
+  resolved "https://registry.npmjs.org/@types/node/-/node-13.13.5.tgz#96ec3b0afafd64a4ccea9107b75bf8489f0e5765"
+  integrity sha512-3ySmiBYJPqgjiHA7oEaIo2Rzz0HrOZ7yrNO5HWyaE5q0lQ3BppDZ3N53Miz8bw2I7gh1/zir2MGVZBvpb1zq9g==
 
 balanced-match@^1.0.0:
   version "1.0.0"
@@ -99,9 +99,9 @@ minimatch@^3.0.3, minimatch@^3.0.4:
     brace-expansion "^1.1.7"
 
 moment@^2.14.1, moment@^2.22.1:
-  version "2.25.1"
-  resolved "https://registry.npmjs.org/moment/-/moment-2.25.1.tgz#1cb546dca1eccdd607c9324747842200b683465d"
-  integrity sha512-nRKMf9wDS4Fkyd0C9LXh2FFXinD+iwbJ5p/lh3CHitW9kZbRbJ8hCruiadiIXZVbeAqKZzqcTvHnK3mRhFjb6w==
+  version "2.25.3"
+  resolved "https://registry.npmjs.org/moment/-/moment-2.25.3.tgz#252ff41319cf41e47761a1a88cab30edfe9808c0"
+  integrity sha512-PuYv0PHxZvzc15Sp8ybUCoQ+xpyPWvjOuK72a5ovzp2LI32rJXOiIfyoFoYvG3s6EwwrdkMyWuRiEHSZRLJNdg==
 
 proper-lockfile@^1.2.0:
   version "1.2.0"

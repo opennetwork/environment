@@ -36,7 +36,7 @@ export async function start() {
             type: FetchEventType,
             request: httpRequest,
             respondWith(httpResponse: Response): void {
-                sendResponse(httpResponse, request, response)
+                sendResponse(httpResponse, httpRequest, response)
                     .then(() => {
                         // Done
                     })
@@ -60,6 +60,7 @@ export async function start() {
     }
 
     async function close() {
+        console.log("Close service")
         return new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
     }
 }
