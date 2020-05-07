@@ -6,8 +6,10 @@ import { Response } from "@opennetwork/http-representation"
 // })
 
 addEventListener("fetch", function (event) {
-  console.log(console.request)
+  throw new Error("Hello!")
+  console.log(event.request)
   event.respondWith(new Response("Hello!", {
+    status: 200,
     headers: {
       "Content-Type": "text/plain"
     }
@@ -19,8 +21,6 @@ addEventListener("Custom event!", function(event) {
 })
 
 addEventListener(ConfigureEventType, async function configure(event) {
-  console.log(event)
-
   const context = getEnvironmentContext()
   if (context) {
     context["identity"] = {
@@ -30,23 +30,8 @@ addEventListener(ConfigureEventType, async function configure(event) {
 })
 
 addEventListener(ExecuteEventType, async function handler(event) {
-  console.log(`We are running in ${event.environment.name}`)
-  console.log({ context: this })
   console.log({ context: getEnvironmentContext() })
-
-  console.log({ environment: getEnvironment() })
-
-  await new Promise(resolve => setTimeout(resolve, 1000))
-
-  console.log({ environmentAfterTimeout: getEnvironment() })
-
-  await new Promise(resolve => setTimeout(() => {
-    console.log({ environmentInTimeout: getEnvironment() })
-    resolve()
-  }, 1000))
-
 })
 
 export default import("../esnext/runtime/run.js")
   .then(({ default: promise }) => promise)
-  .then(() => console.log({ environmentAfterRun: getEnvironment() }))

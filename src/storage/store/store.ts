@@ -28,14 +28,14 @@ export interface Store<Key extends string = string, Value = unknown> extends Asy
 
 export class Store<Key extends string = string, Value = unknown> extends EventTarget implements Store<Key, Value> {
 
-    private defaultMap = new Map<Key, Value>()
+    #defaultMap = new Map<Key, Value>()
 
     constructor() {
         super()
     }
 
     async get(key: Key) {
-        return this.defaultMap.get(key)
+        return this.#defaultMap.get(key)
     }
 
     async set(key: Key, value: Value) {
@@ -69,7 +69,7 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
             }
             await this.dispatchEvent(event)
         }
-        this.defaultMap.set(key, value);
+        this.#defaultMap.set(key, value);
         if (hasPreviousValue === false) {
             const event: CreatedEvent<Key, Value> = {
                 type: CreatedEventType,
@@ -106,7 +106,7 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
             previousValue
         }
         await this.dispatchEvent(deletingEvent)
-        this.defaultMap.delete(key)
+        this.#defaultMap.delete(key)
         const deletedEvent: DeletedEvent<Key, Value> = {
             type: DeletedEventType,
             key,
@@ -116,19 +116,19 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
     }
 
     async has(key: Key) {
-        return this.defaultMap.has(key)
+        return this.#defaultMap.has(key)
     }
 
     async *entries() {
-        yield *this.defaultMap.entries()
+        yield *this.#defaultMap.entries()
     }
 
     async *keys() {
-        yield *this.defaultMap.keys()
+        yield *this.#defaultMap.keys()
     }
 
     async *values() {
-        yield *this.defaultMap.values()
+        yield *this.#defaultMap.values()
     }
 
     async *[Symbol.asyncIterator]() {

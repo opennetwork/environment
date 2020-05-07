@@ -26,13 +26,24 @@ export interface CompleteEvent extends Event<typeof CompleteEventType> {
     environment: Environment
 }
 
+export const ErrorEventType = "error"
+export interface ErrorEvent extends Event<typeof ErrorEventType> {
+    error: Error
+}
+
 export type EnvironmentEvent =
     | ConfigureEvent
     | ExecuteEvent
     | CompleteEvent
+    | ErrorEvent
+    | FetchEvent
 
 export const EnvironmentEvents: EnvironmentEvent["type"][] = [
-    ExecuteEventType
+    ExecuteEventType,
+    ConfigureEventType,
+    FetchEventType,
+    CompleteEventType,
+    ErrorEventType
 ]
 
 export function isEnvironmentEvent(value: Event): value is EnvironmentEvent {
@@ -42,9 +53,8 @@ export function isEnvironmentEvent(value: Event): value is EnvironmentEvent {
 
 export interface EnvironmentEventTarget extends EventTarget {
     addEventListener(type: string, callback: EventCallback): void
-    addEventListener(type: typeof ConfigureEventType, callback: EventCallback<ConfigureEvent>): void
-    addEventListener(type: typeof CompleteEventType, callback: EventCallback<CompleteEvent>): void
-    addEventListener(type: typeof ExecuteEventType, callback: EventCallback<ExecuteEvent>): void
+    addEventListener(type: "end", callback: EventCallback<Event>): void
+    addEventListener(type: typeof ErrorEventType, callback: EventCallback<ErrorEvent>): void
 }
 
 export class EnvironmentEventTarget extends EventTarget implements EnvironmentEventTarget {

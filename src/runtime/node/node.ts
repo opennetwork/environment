@@ -29,8 +29,10 @@ export class Environment extends EnvironmentTemplate {
 
     async configure() {
 
-        await startFetchService()
+        this.addService(startFetchService())
 
     }
+
+
 
 }
