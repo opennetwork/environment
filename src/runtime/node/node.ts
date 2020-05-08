@@ -18,7 +18,7 @@ export class Environment extends EnvironmentTemplate {
         return localStorage.getStore()
     }
 
-    async configure() {
+    async postConfigure() {
         this.addService(startFetchService())
     }
 

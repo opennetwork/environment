@@ -14,12 +14,12 @@ import { Response } from "@opennetwork/http-representation"
 //   console.log({ wildcardEvent: event })
 // })
 
-addEventListener("fetch", function (event) {
-  event.respondWith(new Response(Buffer.from([]), {
-    status: 200,
-    headers: {}
-  }))
-})
+// addEventListener("fetch", function (event) {
+//   event.respondWith(new Response("Hello !", {
+//     status: 200,
+//     headers: {}
+//   }))
+// })
 
 addEventListener("Custom event!", async function(event) {
   console.log(event, getEnvironmentContext())

@@ -1,6 +1,13 @@
 import { getPort } from "./service"
 import { createServer, IncomingMessage, ServerResponse } from "http"
-import { dispatchEvent, addEventListener, CompleteEventType, FetchEvent, FetchEventType } from "../../environment/environment"
+import {
+    dispatchEvent,
+    addEventListener,
+    CompleteEventType,
+    FetchEvent,
+    FetchEventType,
+    hasEventListener
+} from "../../environment/environment"
 import { fromRequest, sendResponse } from "@opennetwork/http-representation-node"
 import { Response } from "@opennetwork/http-representation"
 import { getRuntimeEnvironment } from "../environment"
@@ -10,6 +17,15 @@ export async function start(): Promise<void> {
     const port = getPort("FETCH_SERVICE_PORT")
     if (!port) {
         return
+    }
+
+    if (process.env.FETCH_SERVICE_ON_LISTENER === "true") {
+        const hasListeners = await hasEventListener(FetchEventType)
+
+        if (!hasListeners) {
+            // No need to configure, no one is going to hears
+            return
+        }
     }
 
     const server = createServer(onRequestResponsePair)

@@ -1,7 +1,7 @@
-export function getPort(env: string) {
+export function getPort(env: string, def?: number) {
     const value = process.env[env]
     if (!value || !/^\d+$/.test(value)) {
-        return undefined
+        return def
     }
     return +value
 }

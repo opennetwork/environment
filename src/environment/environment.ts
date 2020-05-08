@@ -23,6 +23,7 @@ export interface Environment extends EnvironmentEventTarget {
     name: string
     runInAsyncScope(fn: () => void | Promise<void>): Promise<void>
     configure?(): void | Promise<void>
+    postConfigure?(): void | Promise<void>
     addEnvironment(environment: Environment): void
     addService(promise: Promise<unknown>): void
     waitForServices(): Promise<void>

@@ -20,6 +20,10 @@ export async function run() {
             environment
         })
 
+        if (environment.postConfigure) {
+            environment.postConfigure()
+        }
+
         try {
             await dispatchEvent({
                 type: ExecuteEventType,
