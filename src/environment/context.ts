@@ -1,4 +1,4 @@
-import {getEnvironment} from "./environment"
+import {Environment, getEnvironment} from "./environment"
 
 export const EnvironmentContextSymbol = Symbol("Environment Context")
 
@@ -18,7 +18,18 @@ export function createEnvironmentContext(): EnvironmentContext {
     }
 }
 
-export function getEnvironmentContext(): EnvironmentContext | undefined {
-    const environment = getEnvironment()
-    return environment ? environment.context : undefined
+const globalEnvironmentContext = new WeakMap<Environment, EnvironmentContext>()
+
+export function getEnvironmentContext(environment: Environment | undefined = getEnvironment()) {
+    if (!environment) {
+        throw new Error("Environment required for EnvironmentContext")
+    }
+
+    let environmentEventContext = globalEnvironmentContext.get(environment)
+    if (!environmentEventContext) {
+        environmentEventContext = createEnvironmentContext()
+        globalEnvironmentContext.set(environment, environmentEventContext)
+    }
+
+    return environmentEventContext
 }

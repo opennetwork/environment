@@ -14,14 +14,26 @@ export interface EventListener {
 }
 
 export interface EventContext {
+    dispatcher: Event | undefined
     listeners: EventListener[]
     dispatchedEvents: DispatchedEvent[]
 }
 
 const globalEventContext = new WeakMap<Environment, WeakMap<Event, EventContext>>()
 
-export function getEventContext(event: Event) {
+export function hasEventContext(event: Event) {
+    const environment = getEnvironment()
+    if (!environment) {
+        return false
+    }
+    const environmentEventContext = globalEventContext.get(environment)
+    if (!environmentEventContext) {
+        return false
+    }
+    return environmentEventContext.has(event)
+}
 
+export function getEventContext(event: Event) {
     const environment = getEnvironment()
 
     if (!environment) {
@@ -39,6 +51,7 @@ export function getEventContext(event: Event) {
 
     if (!eventContext) {
         eventContext = {
+            dispatcher: undefined,
             dispatchedEvents: [],
             listeners: []
         }

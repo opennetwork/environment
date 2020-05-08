@@ -1,7 +1,7 @@
 import { Event } from "../event/event"
 import { Environment, getEnvironment } from "../../environment/environment"
-import { getParentEvent, runWithParentEvent } from "../event/parent"
-import { getEventContext, EventListener } from "../event/context"
+import { getEvent, runWithEvent } from "../event/dispatcher"
+import {getEventContext, EventListener, hasEventContext} from "../event/context"
 import { EventCallback } from "../event/callback"
 import { EventDescriptor } from "../event/descriptor"
 import { matchEventCallback } from "../event/callback"
@@ -45,7 +45,7 @@ export class EventTarget implements EventTarget {
             return
         }
         this.#listeners.push(listener.descriptor)
-        const parentEvent = getParentEvent()
+        const parentEvent = getEvent()
         if (parentEvent) {
             const parentEventContext = getEventContext(parentEvent)
             parentEventContext.listeners.push(listener)
@@ -62,8 +62,15 @@ export class EventTarget implements EventTarget {
 
     async dispatchEvent(event: Event) {
         const listeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
-        const parentEvent = getParentEvent()
+        const parentEvent = getEvent()
         const environment = this.#environment || getEnvironment()
+
+        if (environment && hasEventContext(event)) {
+            // TODO decide if we should just do this anyway, it might lead to some confusing things happening so I think it is better to straight up disallow it
+            // In some cases users may expect their `this` scope to stay the same for the events methods, e.g. if the event was created as a class, so this should lead
+            // to them creating a new one or if the event class has a clone function..
+            throw new Error(`Event ${event.type} has already been dispatched, by design we have excluded this pattern as we utilise the event object instance to create unique weak contexts. To dispatch the event again, utilise the spread syntax if the event is an object as so:\n\nawait dispatchEvent({ ...event })\n\nIf the event creating using a constructor, please re-create or clone the event before invoking dispatchEvent again for this event instance`)
+        }
 
         if (!listeners.length) {
             if (!parentEvent) {
@@ -76,7 +83,12 @@ export class EventTarget implements EventTarget {
             })
         }
 
-        await runWithParentEvent(event, async () => {
+        if (environment && parentEvent) {
+            const eventContext = getEventContext(event)
+            eventContext.dispatcher = parentEvent
+        }
+
+        await runWithEvent(event, async () => {
             for (const descriptor of listeners) {
                 if (environment && parentEvent) {
                     const parentEventContext = getEventContext(parentEvent)

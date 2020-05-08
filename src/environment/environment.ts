@@ -35,8 +35,8 @@ export class Environment extends EnvironmentEventTarget implements Environment {
     #services: Promise<unknown>[] = []
     #environments: Environment[] = []
 
-    constructor(public name: string, public context: EnvironmentContext = createEnvironmentContext()) {
-        super(context)
+    constructor(public name: string) {
+        super()
     }
 
     async runInAsyncScope(fn: () => void | Promise<void>): Promise<void> {

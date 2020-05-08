@@ -6,13 +6,9 @@ import { Response } from "@opennetwork/http-representation"
 // })
 
 addEventListener("fetch", function (event) {
-  throw new Error("Hello!")
-  console.log(event.request)
-  event.respondWith(new Response("Hello!", {
+  event.respondWith(new Response(Buffer.from([]), {
     status: 200,
-    headers: {
-      "Content-Type": "text/plain"
-    }
+    headers: {}
   }))
 })
 
