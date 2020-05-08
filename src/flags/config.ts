@@ -1,53 +1,40 @@
 import { Environment, getEnvironment } from "../environment/environment"
 import { Flag } from "./flag"
 
-export interface FlagConfig {
-    flag: Flag
-    inheritDispatcherEvents: boolean
-}
+const flags = new WeakMap<Environment, Set<Flag>>()
 
-export interface FlagsConfig {
-    flags: FlagConfig[]
-}
-
-const flags = new WeakMap<Environment, FlagsConfig>()
-
-export function getFlagConfig() {
+export function getFlags() {
     const environment = getEnvironment()
     if (!environment) {
-        throw new Error("Event required to use FlagContext")
+        throw new Error("Environment required to use FlagContext")
     }
-    let config = flags.get(environment)
-    if (!config) {
-        config = {
-            flags: []
-        }
-        flags.set(environment, config)
+    let set = flags.get(environment)
+    if (!set) {
+        set = new Set<Flag>()
+        flags.set(environment, set)
     }
-    return config
+    return set
 }
 
 export function ensureFlag(flag: Flag) {
-    const config = getFlagConfig()
-    const foundFlagIndex = config.flags.findIndex(
-        config => config.flag === flag
-    )
-    if (foundFlagIndex > -1) {
+    if (getFlags().has(flag)) {
         return
     }
     createFlag(flag)
 }
 
-export function createFlag(flag: Flag, inheritDispatcherEvents: boolean = true) {
-    const config = getFlagConfig()
-    const foundFlagIndex = config.flags.findIndex(
-        config => config.flag === flag
-    )
-    if (foundFlagIndex > -1) {
+export function createFlag(flag: Flag) {
+    const set = getFlags()
+    if (set.has(flag)) {
         throw new Error("Flag already exists")
     }
-    config.flags.push({
-        flag,
-        inheritDispatcherEvents
-    })
+    set.add(flag)
+}
+
+export function resetFlag(flag: Flag) {
+    const set = getFlags()
+    if (!set.has(flag)) {
+        return
+    }
+    set.delete(flag)
 }

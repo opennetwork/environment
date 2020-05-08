@@ -8,9 +8,10 @@ import {
   CompleteEventType,
   getTracer,
   createFlag,
-  setEventFlag,
   setFlag,
-  hasFlag
+  hasFlag,
+  resetFlag,
+  removeFlag
 } from "../esnext/index.js"
 import { Response } from "@opennetwork/http-representation"
 
@@ -33,24 +34,27 @@ addEventListener("Custom event!", async function(event) {
 
 addEventListener(ConfigureEventType, async function configure(event) {
   createFlag("FLAG")
-  createFlag("FLAG_NON_INHERITING", false)
 
-  setEventFlag(event, "FLAG_NON_INHERITING")
   setFlag("FLAG")
 
   console.log({
-    FLAG: hasFlag("FLAG"),
-    FLAG_NON_INHERITING: hasFlag("FLAG_NON_INHERITING")
+    FLAG: hasFlag("FLAG")
   })
 
   addEventListener("child event", function () {
+
     console.log({
-      FLAG: hasFlag("FLAG"),
-      FLAG_NON_INHERITING: hasFlag("FLAG_NON_INHERITING")
+      FLAG: hasFlag("FLAG")
     })
   })
 
   await dispatchEvent({ type: "child event" })
+
+  resetFlag("FLAG")
+  console.log({
+    FLAG: hasFlag("FLAG")
+  })
+  createFlag("FLAG")
 
   const context = getEnvironmentContext()
   if (context) {
@@ -67,8 +71,7 @@ addEventListener(ExecuteEventType, async function handler(event) {
   console.log(JSON.stringify(dispatchMap(event)))
 
   console.log({
-    FLAG: hasFlag("FLAG"),
-    FLAG_NON_INHERITING: hasFlag("FLAG_NON_INHERITING")
+    FLAG: hasFlag("FLAG")
   })
 
 })

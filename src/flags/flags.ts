@@ -1,5 +1,6 @@
 import { Flag } from "./flag"
 import { Environment, getEnvironment } from "../environment/environment"
+import {ensureFlag, getFlags} from "./config";
 
 export * from "./config"
 export * from "./flag"
@@ -7,6 +8,9 @@ export * from "./flag"
 const environmentFlags = new WeakMap<Environment, Set<Flag>>()
 
 export function hasFlag(flag: Flag) {
+    if (!getFlags().has(flag)) {
+        return false
+    }
     const environment = getEnvironment()
     if (!environment) {
         return false
@@ -16,6 +20,9 @@ export function hasFlag(flag: Flag) {
 }
 
 export function setFlag(flag: Flag) {
+    if (!getFlags().has(flag)) {
+        return
+    }
     const environment = getEnvironment()
     if (!environment) {
         throw new Error("Environment required to set flag")
@@ -38,5 +45,4 @@ export function removeFlag(flag: Flag) {
         return
     }
     flags.delete(flag)
-
 }
