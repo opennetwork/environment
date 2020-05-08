@@ -95,7 +95,8 @@ export async function start(): Promise<void> {
                 async waitUntil(promise: Promise<unknown>): Promise<void> {
                     environment.addService(promise)
                     await promise
-                }
+                },
+                parallel: false
             }
 
             await environment.runInAsyncScope(async () => {

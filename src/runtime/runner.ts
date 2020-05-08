@@ -17,7 +17,8 @@ export async function run() {
 
         await dispatchEvent({
             type: ConfigureEventType,
-            environment
+            environment,
+            parallel: false
         })
 
         if (environment.postConfigure) {
@@ -27,7 +28,8 @@ export async function run() {
         try {
             await dispatchEvent({
                 type: ExecuteEventType,
-                environment
+                environment,
+                parallel: false
             })
             await environment.waitForServices()
         } catch (error) {

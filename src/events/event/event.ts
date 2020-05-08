@@ -1,11 +1,12 @@
 export interface Event<Name extends string = string> {
     type: Name
+    parallel?: boolean
     [key: string]: unknown
     [key: number]: unknown
 }
 
 export interface ParallelEvent<Name extends string = string> extends Event<Name> {
-    parallel: true
+    parallel: true | undefined
 }
 
 export function isEvent(value: object): value is Event {
@@ -13,5 +14,5 @@ export function isEvent(value: object): value is Event {
 }
 
 export function isParallelEvent(value: object): value is ParallelEvent {
-    return isEvent(value) && value.parallel === true
+    return isEvent(value) && value.parallel !== false
 }
