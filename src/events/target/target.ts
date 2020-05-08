@@ -1,4 +1,4 @@
-import { Event } from "../event/event"
+import {Event, isParallelEvent} from "../event/event"
 import { Environment, getEnvironment } from "../../environment/environment"
 import { getEvent, runWithEvent } from "../event/dispatcher"
 import { getEventContext, EventListener, hasEventContext } from "../event/context"
@@ -89,9 +89,12 @@ export class EventTarget implements EventTarget {
             eventContext.dispatcher = parentEvent
         }
 
-        await runWithSpan(`event:callbacks:${event.type}`, {}, async () => {
+        await runWithSpan(`event:callbacks:${event.type}`, { attributes: { event, listeners } }, async () => {
             await runWithEvent(event, async () => {
-                for (const descriptor of listeners) {
+                const parallel = isParallelEvent(event)
+                const promises = []
+                for (let index = 0; index < listeners.length; index += 1) {
+                    const descriptor = listeners[index]
                     if (environment && parentEvent) {
                         const parentEventContext = getEventContext(parentEvent)
                         parentEventContext.dispatchedEvents.push({
@@ -100,7 +103,7 @@ export class EventTarget implements EventTarget {
                             descriptor
                         })
                     }
-                    await runWithSpan(`event:callback:${event.type}`, {}, async () => {
+                    const promise = runWithSpan(`event:callback:${index}:${event.type}`, {}, async () => {
                         if (environment) {
                             await environment.runInAsyncScope(async () => {
                                 await descriptor.callback.call(this.#thisValue, event)
@@ -109,6 +112,17 @@ export class EventTarget implements EventTarget {
                             await descriptor.callback.call(this.#thisValue, event)
                         }
                     })
+                    if (!parallel) {
+                        await promise
+                    } else {
+                        promises.push(promise)
+                    }
+                }
+                if (promises.length) {
+                    // Allows for all promises to settle finish so we can stay within the event, we then
+                    // will utilise Promise.all which will reject with the first rejected promise
+                    await Promise.allSettled(promises)
+                    await Promise.all(promises)
                 }
             })
         })
