@@ -1,9 +1,10 @@
 import { getPort } from "./service"
-import { createServer, IncomingMessage, ServerResponse, STATUS_CODES } from "http"
+import { createServer, IncomingMessage, ServerResponse } from "http"
 import { dispatchEvent, addEventListener, CompleteEventType, FetchEvent, FetchEventType } from "../../environment/environment"
 import { fromRequest, sendResponse } from "@opennetwork/http-representation-node"
 import { Response } from "@opennetwork/http-representation"
 import { getRuntimeEnvironment } from "../environment"
+import { runWithSpan, trace, error } from "../../tracing/span"
 
 export async function start(): Promise<void> {
     const port = getPort("FETCH_SERVICE_PORT")
@@ -37,16 +38,11 @@ export async function start(): Promise<void> {
             baseUrl = "https://fetch.spec.whatwg.org"
         }
 
-        run().catch(error => {
-            const errorId = Math.random().toString().replace(/[^\d]/g, "")
-            const date = new Date().toUTCString()
-            console.warn(date, errorId, error)
+        runWithSpan("request", {}, run).catch(() => {
             if (response.writableEnded) {
                 return
             }
-            response.writeHead(500, {
-                Warning: `199 - "${errorId}" "${date}"`
-            })
+            response.writeHead(500)
             response.end()
         })
 
@@ -59,21 +55,28 @@ export async function start(): Promise<void> {
                 baseUrl
             )
 
+            trace({
+                "http.url": httpRequest.url,
+                "http.method": httpRequest.method
+            })
+
             const event: FetchEvent = {
                 type: FetchEventType,
                 request: httpRequest,
                 respondWith(httpResponse: Response): void {
+                    trace({
+                        "http.status": httpResponse.status
+                    })
                     environment.addService(
                         sendResponse(httpResponse, httpRequest, response)
                             .then(() => {
                                 // Done
+                                trace({
+                                    event: "request_end"
+                                })
                             })
-                            .catch((error: unknown) => {
-                                // Error
-                                console.warn(error)
-                            })
+                            .catch(error)
                     )
-
                 },
                 async waitUntil(promise: Promise<unknown>): Promise<void> {
                     environment.addService(promise)

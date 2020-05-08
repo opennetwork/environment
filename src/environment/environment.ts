@@ -14,14 +14,13 @@ import {
     RenderEventType,
     ErrorEvent
 } from "./events"
-import {EnvironmentContext, createEnvironmentContext} from "./context"
+import { EnvironmentContext } from "./context"
 
 export * from "./events"
 export * from "./context"
 
 export interface Environment extends EnvironmentEventTarget {
     name: string
-    context: EnvironmentContext
     runInAsyncScope(fn: () => void | Promise<void>): Promise<void>
     configure?(): void | Promise<void>
     addEnvironment(environment: Environment): void

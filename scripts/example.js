@@ -1,4 +1,13 @@
-import { addEventListener, ExecuteEventType, ConfigureEventType, dispatchEvent, getEnvironmentContext, getEventContext } from "../esnext/index.js"
+import {
+  addEventListener,
+  ExecuteEventType,
+  ConfigureEventType,
+  dispatchEvent,
+  getEnvironmentContext,
+  getEventContext,
+  CompleteEventType,
+  getTracer
+} from "../esnext/index.js"
 import { Response } from "@opennetwork/http-representation"
 
 // addEventListener("*", function (event) {

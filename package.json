@@ -32,6 +32,7 @@
     "@opennetwork/http-representation": "^3.0.0",
     "@opennetwork/http-representation-node": "^3.0.0",
     "dependency-graph": "^0.9.0",
-    "lit-html": "^1.2.1"
+    "lit-html": "^1.2.1",
+    "opentracing": "^0.14.4"
   }
 }

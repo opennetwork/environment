@@ -1,10 +1,11 @@
 import { Event } from "../event/event"
 import { Environment, getEnvironment } from "../../environment/environment"
 import { getEvent, runWithEvent } from "../event/dispatcher"
-import {getEventContext, EventListener, hasEventContext} from "../event/context"
+import { getEventContext, EventListener, hasEventContext } from "../event/context"
 import { EventCallback } from "../event/callback"
 import { EventDescriptor } from "../event/descriptor"
 import { matchEventCallback } from "../event/callback"
+import { runWithSpan } from "../../tracing/span"
 
 export {
     EventCallback
@@ -88,25 +89,30 @@ export class EventTarget implements EventTarget {
             eventContext.dispatcher = parentEvent
         }
 
-        await runWithEvent(event, async () => {
-            for (const descriptor of listeners) {
-                if (environment && parentEvent) {
-                    const parentEventContext = getEventContext(parentEvent)
-                    parentEventContext.dispatchedEvents.push({
-                        target: this,
-                        event,
-                        descriptor
+        await runWithSpan(`event:callbacks:${event.type}`, {}, async () => {
+            await runWithEvent(event, async () => {
+                for (const descriptor of listeners) {
+                    if (environment && parentEvent) {
+                        const parentEventContext = getEventContext(parentEvent)
+                        parentEventContext.dispatchedEvents.push({
+                            target: this,
+                            event,
+                            descriptor
+                        })
+                    }
+                    await runWithSpan(`event:callback:${event.type}`, {}, async () => {
+                        if (environment) {
+                            await environment.runInAsyncScope(async () => {
+                                await descriptor.callback.call(this.#thisValue, event)
+                            })
+                        } else {
+                            await descriptor.callback.call(this.#thisValue, event)
+                        }
                     })
                 }
-                if (environment) {
-                    await environment.runInAsyncScope(async () => {
-                        await descriptor.callback.call(this.#thisValue, event)
-                    })
-                } else {
-                    await descriptor.callback.call(this.#thisValue, event)
-                }
-            }
+            })
         })
+
     }
 
     async hasEventListener(type: string, callback?: EventCallback) {
