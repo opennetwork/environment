@@ -38,7 +38,17 @@ export async function start(): Promise<void> {
             baseUrl = "https://fetch.spec.whatwg.org"
         }
 
-        runWithSpan("request", {}, run).catch(() => {
+        const httpRequest = fromRequest(
+            request,
+            baseUrl
+        )
+
+        const attributes = {
+            "http.url": httpRequest.url,
+            "http.method": httpRequest.method
+        }
+
+        runWithSpan("request", { attributes }, run).catch(() => {
             if (response.writableEnded) {
                 return
             }
@@ -50,30 +60,18 @@ export async function start(): Promise<void> {
 
             const environment = await getRuntimeEnvironment()
 
-            const httpRequest = fromRequest(
-                request,
-                baseUrl
-            )
-
-            trace({
-                "http.url": httpRequest.url,
-                "http.method": httpRequest.method
-            })
-
             const event: FetchEvent = {
                 type: FetchEventType,
                 request: httpRequest,
                 respondWith(httpResponse: Response): void {
-                    trace({
+                    trace("response", {
                         "http.status": httpResponse.status
                     })
                     environment.addService(
                         sendResponse(httpResponse, httpRequest, response)
                             .then(() => {
                                 // Done
-                                trace({
-                                    event: "request_end"
-                                })
+                                trace("request_end")
                             })
                             .catch(error)
                     )

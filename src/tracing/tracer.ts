@@ -1,7 +1,7 @@
 import { Environment, getEnvironment } from "../environment/environment"
-import OpenTracing from "opentracing"
+import api, { Tracer } from "@opentelemetry/api"
 
-const tracers = new WeakMap<Environment, OpenTracing.Tracer>()
+const tracers = new WeakMap<Environment, Tracer>()
 
 export function getTracer() {
     const environment = getEnvironment()
@@ -11,7 +11,7 @@ export function getTracer() {
     let tracer = tracers.get(environment)
     if (!tracer) {
         // TODO create tracer implementation
-        tracer = new OpenTracing.Tracer()
+        tracer = api.trace.getTracer("@opennetwork/environment")
         tracers.set(environment, tracer)
     }
     return tracer

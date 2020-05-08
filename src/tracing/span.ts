@@ -1,29 +1,27 @@
 import { getTracer } from "./tracer"
 import { createLocalStorage } from "../local-storage"
-import OpenTracing from "opentracing"
+import { Span, SpanOptions, Attributes } from "@opentelemetry/api"
 
-const localStorage = createLocalStorage<OpenTracing.Span>()
+const localStorage = createLocalStorage<Span>()
 
-export async function runWithSpan(name: string, options: OpenTracing.SpanOptions, callback: () => void | Promise<void>) {
+export async function runWithSpan(name: string, options: SpanOptions, callback: () => void | Promise<void>) {
     const tracer = getTracer()
     const parent = getSpan()
-    if (parent && options.references) {
+    if (parent && !options.parent) {
         options = {
             ...options,
-            references: [
-                OpenTracing.childOf(parent.context())
-            ]
+            parent
         }
     }
     const span = tracer.startSpan(name, options)
     try {
         await localStorage.run(span, callback)
-        trace({ event: "success" }, undefined, span)
+        trace("success", {}, undefined, span)
     } catch (e) {
         error(e, undefined, span)
         throw e
     } finally {
-        span.finish()
+        span.end()
     }
     return span
 }
@@ -32,20 +30,18 @@ export function getSpan() {
     return localStorage.getStore()
 }
 
-export function trace(keyValuePairs: { [key: string]: any }, timestamp?: number, span: OpenTracing.Span | undefined = getSpan()) {
+export function trace(name: string, keyValuePairs: Attributes = {}, timestamp?: number, span: Span | undefined = getSpan()) {
     if (span) {
-        span.log(keyValuePairs, timestamp)
+        span.addEvent(name, keyValuePairs, timestamp)
     }
 }
 
-export function error(error: Error, timestamp?: number, span: OpenTracing.Span | undefined = getSpan()) {
+export function error(error: Error, timestamp?: number, span: Span | undefined = getSpan()) {
     if (span) {
-        span.setTag(OpenTracing.Tags.ERROR, true)
-        span.log({
-            event: "error",
+        span.addEvent("error", {
             "error.object": error,
             "message": error.message,
             "stack": error.stack
-        })
+        }, timestamp)
     }
 }

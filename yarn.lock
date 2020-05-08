@@ -12,6 +12,18 @@
   resolved "https://registry.npmjs.org/@opennetwork/http-representation/-/http-representation-3.0.0.tgz#5665ee2a5900dc53cff207aef491144bed0ce32f"
   integrity sha512-g3davRpiR4m9vMhEtocjiENRBgJRnzNd9tWmO2b9E0z9Je5iVmMuzLvTqdP0p+Ew9RIbIEaC+ayEalIkLVgKOQ==
 
+"@opentelemetry/api@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.npmjs.org/@opentelemetry/api/-/api-0.7.0.tgz#99be9ae3aa64c0e73077ac7c093ea81303aa609d"
+  integrity sha512-h4wdvfZ7y3Md3gRr0zycv6oFuqHjWdZ5oJGSoDGoyG6vQSPdIJorWH4SSalif8yW9l9T+bsAkHAt2VVG/BiW8g==
+  dependencies:
+    "@opentelemetry/context-base" "^0.7.0"
+
+"@opentelemetry/context-base@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.npmjs.org/@opentelemetry/context-base/-/context-base-0.7.0.tgz#b2493b3122f1e44ec8875da0846e58edec4ff80e"
+  integrity sha512-/mhheI4pUxr2OFYsCOFAu/U27v0N5ZK2WDNhVA1ZCqdmswe22Bu0dWoNrJvRB6j6kwCFxyy0YnzGFfQsAyAcsg==
+
 "@types/node@^13.13.4":
   version "13.13.5"
   resolved "https://registry.npmjs.org/@types/node/-/node-13.13.5.tgz#96ec3b0afafd64a4ccea9107b75bf8489f0e5765"
@@ -112,11 +124,6 @@ moment@^2.14.1, moment@^2.22.1:
   version "2.25.3"
   resolved "https://registry.npmjs.org/moment/-/moment-2.25.3.tgz#252ff41319cf41e47761a1a88cab30edfe9808c0"
   integrity sha512-PuYv0PHxZvzc15Sp8ybUCoQ+xpyPWvjOuK72a5ovzp2LI32rJXOiIfyoFoYvG3s6EwwrdkMyWuRiEHSZRLJNdg==
-
-opentracing@^0.14.4:
-  version "0.14.4"
-  resolved "https://registry.npmjs.org/opentracing/-/opentracing-0.14.4.tgz#a113408ea740da3a90fde5b3b0011a375c2e4268"
-  integrity sha512-nNnZDkUNExBwEpb7LZaeMeQgvrlO8l4bgY/LvGNZCR0xG/dGWqHqjKrAmR5GUoYo0FIz38kxasvA1aevxWs2CA==
 
 proper-lockfile@^1.2.0:
   version "1.2.0"
