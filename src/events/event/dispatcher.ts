@@ -25,7 +25,10 @@ export function getDispatcherEvents(event: Event | undefined = getEvent()): Even
     if (!eventContext.dispatcher) {
         return []
     }
-    return getDispatcherEvents(eventContext.dispatcher).concat([
+    return [
         eventContext.dispatcher
-    ])
+    ]
+        .concat(
+            getDispatcherEvents(eventContext.dispatcher)
+        )
 }
