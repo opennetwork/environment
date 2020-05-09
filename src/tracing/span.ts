@@ -27,7 +27,6 @@ export async function runWithSpan(name: string, options: SpanOptions, callback: 
         await localStorage.run(span, callback)
         trace("success", {}, undefined, span)
     } catch (e) {
-        console.warn(e)
         error(e, undefined, span)
         throw e
     } finally {

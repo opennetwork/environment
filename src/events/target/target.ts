@@ -8,7 +8,7 @@ import { matchEventCallback } from "../event/callback"
 import { runWithSpanOptional, trace } from "../../tracing/span"
 import { isParallelEvent } from "../parallel-event"
 import { isSignalEvent } from "../signal-event"
-import { isAbortError } from "../../errors/errors";
+import {AbortError, isAbortError} from "../../errors/errors";
 
 export {
     EventCallback
@@ -135,7 +135,13 @@ export class EventTarget implements EventTarget {
                     })
 
                     if (!parallel) {
-                        await promise
+                        try {
+                            await promise
+                        } catch (error) {
+                            if (!isSignalHandled(event, error)) {
+                                throw error
+                            }
+                        }
                         if (isSignalEvent(event) && event.signal.aborted) {
                             // bye
                             return
@@ -166,10 +172,10 @@ export class EventTarget implements EventTarget {
                         // The dispatcher can throw an abort error if they need to throw it up the chain
                         if (isSignalEvent(event) && event.signal.aborted) {
                             const before = unhandled.length
-                            unhandled = unhandled.filter(result => !(result.reason instanceof Error && isAbortError(result.reason)))
+                            unhandled = unhandled.filter(result => isSignalHandled(event, result.reason))
                             const handled = before - unhandled.length
                             if (handled) {
-                                trace("abort_error_handled", { handled })
+                                trace("error_handled", { handled })
                             }
                         }
 
@@ -187,5 +193,11 @@ export class EventTarget implements EventTarget {
     async hasEventListener(type: string, callback?: EventCallback) {
         const foundIndex = this.#listeners.findIndex(matchEventCallback(type, callback))
         return foundIndex > -1
+    }
+}
+
+function isSignalHandled(event: Event, error: unknown) {
+    if (isSignalEvent(event) && event.signal.aborted && error instanceof Error && isAbortError(error)) {
+        return true
     }
 }

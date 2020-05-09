@@ -17,11 +17,13 @@ export function isSignalEvent(value: object): value is SignalEvent {
         return value.hasOwnProperty("signal")
     }
     function isAbortSignal(value: unknown): value is AbortSignal {
+        function isAbortSignalLike(value: unknown): value is Partial<Record<keyof AbortSignal, unknown>> {
+            return typeof value === "object"
+        }
         return (
-            typeof value === "object" &&
-            !!value &&
-            value.hasOwnProperty("aborted") &&
-            value.hasOwnProperty("addEventListener")
+            isAbortSignalLike(value) &&
+            typeof value.aborted === "boolean" &&
+            typeof value.addEventListener === "function"
         )
     }
     return (

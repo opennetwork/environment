@@ -11,9 +11,12 @@ import {
   setFlag,
   hasFlag,
   resetFlag,
-  removeFlag
+  removeFlag,
+  isSignalEvent,
+  isRespondEvent
 } from "../esnext/index.js"
 import { Response } from "@opennetwork/http-representation"
+import AbortController from "abort-controller";
 
 // addEventListener("*", function (event) {
 //   console.log({ wildcardEvent: event })
@@ -26,8 +29,100 @@ import { Response } from "@opennetwork/http-representation"
 //   }))
 // })
 
+addEventListener("Aborting only event", async function(event) {
+  if (isSignalEvent(event)) {
+    console.log("Waiting to abort! I'm gonna do it!")
+    await new Promise(resolve => event.signal.addEventListener("abort", resolve))
+    console.log("Was told to abort!")
+  } else {
+    console.log("Did not receive a signal, aborting!!!!", event, isSignalEvent(event))
+  }
+  const error = new Error()
+  error.name = "AbortError"
+  throw error
+})
+
+addEventListener("Aborting only event", async function (event) {
+  if (isSignalEvent(event) && isRespondEvent(event)) {
+    console.log("I lied! I will try and respond in time!")
+    const response = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        console.log("Responding")
+        resolve("42")
+      }, 20)
+      event.signal.addEventListener("abort", () => {
+        console.log("Lier aborted")
+        clearTimeout(timeout)
+        const error = new Error()
+        error.name = "AbortError"
+        reject(error)
+      })
+    })
+    event.respondWith(response)
+  } else {
+    console.log("Did not receive a signal or respond event, aborting!!!!")
+    const error = new Error()
+    error.name = "AbortError"
+    throw error
+  }
+})
+
 addEventListener("Custom event!", async function(event) {
   console.log(event, getEnvironmentContext())
+
+  const { resolve: withResponse, reject: withResponseError, promise: responded } = (() => {
+    let resolve, reject
+    const promise = new Promise((resolveFn, rejectFn) => {
+      resolve = resolveFn
+      reject = rejectFn
+    })
+    return { resolve, reject, promise }
+  })()
+
+  const controller = new AbortController()
+
+  const customEvent = {
+    type: "Aborting only event",
+    respondWith(value) {
+      new Promise(
+        (resolve, reject) => {
+          Promise.resolve(value)
+            .then(resolve)
+            .catch(error => {
+              if (error instanceof Error && error.name === "AbortError") {
+                // Ignore
+                return
+              }
+              reject(error)
+            })
+        }
+      )
+        .then(withResponse, withResponseError)
+    },
+    signal: controller.signal,
+    parallel: true
+  }
+
+  const results = await Promise.allSettled([
+    dispatchEvent(customEvent),
+    new Promise(resolve => {
+      const timeout = setTimeout(() => {
+        if (!controller.signal.aborted) {
+          console.log("Aborting")
+          controller.abort()
+          resolve("Aborted, timeout")
+        }
+      }, 200)
+      responded.then(immediate, immediate)
+      function immediate() {
+        clearTimeout(timeout)
+        console.log("Aborting, response given")
+        controller.abort()
+        resolve("Aborted, response given")
+      }
+    })
+  ])
+  console.log(results)
 
   await dispatchEvent({ type: "Some other event" })
 })
