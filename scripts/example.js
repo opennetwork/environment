@@ -24,13 +24,18 @@ import AbortController from "abort-controller";
 
 addEventListener("fetch", async function (event) {
   const response = new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      console.log("Fetch Responding")
-      resolve(new Response("Hello !", {
-        status: 200,
-        headers: {}
-      }))
-    }, 45000)
+    const timeout = setTimeout(
+      () => {
+        console.log("Fetch Responding")
+        resolve(new Response("Hello !", {
+          status: 200,
+          headers: {}
+        }))
+
+      },
+      // Simulate request time here, if FETCH_SERVICE_ABORT_ON_TIMEOUT=true then timeout will be 30 seconds by defaults
+      1000
+    )
     event.signal.addEventListener("abort", () => {
       console.log("Fetch Responder aborted")
       clearTimeout(timeout)
@@ -40,7 +45,7 @@ addEventListener("fetch", async function (event) {
     })
   })
   event.respondWith(response)
-  return response.catch(error => console.log("Caught before returning", error))
+  return response
 })
 
 addEventListener("Aborting only event", async function(event) {

@@ -14,7 +14,7 @@ import { getRuntimeEnvironment } from "../environment"
 import { runWithSpan, trace, error as traceError } from "../../tracing/span"
 import AbortController from "abort-controller"
 import { defer } from "../../deferred"
-import {isSignalEvent, isSignalHandled} from "../../events/events"
+import { isSignalHandled } from "../../events/events"
 import { hasFlag } from "../../flags/flags"
 
 export async function start(): Promise<void> {
@@ -78,15 +78,9 @@ export async function start(): Promise<void> {
         })
 
         async function run() {
-
             const environment = await getRuntimeEnvironment()
-
             const controller = new AbortController()
-
             const { resolve: respondWith, reject: respondWithError, promise: responded } = defer<Response>()
-
-            responded.catch(error => console.log("First caught", { error }))
-
             const event: FetchEvent = {
                 type: FetchEventType,
                 request: httpRequest,
@@ -95,14 +89,10 @@ export async function start(): Promise<void> {
                         Promise.resolve(httpResponse)
                             .then(respondWith)
                             .catch(error => {
-                                console.log("Catching in main catcher", error, isSignalHandled(event, error))
                                 if (isSignalHandled(event, error)) {
                                     return
                                 }
                                 respondWithError(error)
-                            })
-                            .catch(error => {
-                                console.log("Uncaught error here!!!", { error })
                             })
                     )
                 },
@@ -113,62 +103,45 @@ export async function start(): Promise<void> {
                 parallel: false,
                 signal: controller.signal
             }
-
             let timeout: unknown
-
             try {
                 request.on("aborted", () => abort("request_aborted"))
                 // We will abort on close to indicate to handlers that we can no longer accept a response
                 request.on("close", () => abort("request_closed"))
-
                 const danglingPromise = responded.then(
                     () => abort("responded"),
                     () => abort("responded_with_error")
                 )
-
                 if (hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT")) {
                     timeout = setTimeout(() => {
-                        console.log("timeout")
                         abort("timed_out")
                         respondWith(new Response("", {
                             status: 408
                         }))
-                    }, 1000)
+                    }, 30000)
                 }
-
                 await environment.runInAsyncScope(async () => {
                     await dispatchEvent(event)
                 })
-
                 await danglingPromise
-
                 const httpResponse = await responded
-
                 if (typeof timeout === "number") {
                     clearTimeout(timeout)
                 }
-
                 trace("response", {
                     "http.status": httpResponse.status
                 })
-
                 await sendResponse(httpResponse, httpRequest, response)
-
                 trace("request_end")
-            } catch(e) {
-                console.log("Caught here???", e)
             } finally {
-
-                await responded
-
                 abort("finally")
+                await responded
             }
 
             function abort(reason?: string) {
                 if (typeof timeout === "number") {
                     clearTimeout(timeout)
                 }
-
                 if (controller.signal.aborted) {
                     // Already aborted, no need to do it again!
                     return
@@ -178,18 +151,12 @@ export async function start(): Promise<void> {
                         reason
                     })
                 }
-
-                try {
-                    controller.abort()
-                } catch (error) {
-                    console.log("Weirder caught", { error })
-                }
+                controller.abort()
             }
         }
     }
 
     async function close() {
-        console.log("Close service")
         return new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
     }
 }

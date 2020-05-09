@@ -170,7 +170,6 @@ export class EventTarget implements EventTarget {
 
                     if (rejected.length) {
                         let unhandled = rejected
-                        console.log("ETP", { unhandled })
 
                         // If the event was aborted, then allow abort errors to occur, and handle these as handled errors
                         // The dispatcher does not care about this because they requested it
