@@ -6,42 +6,53 @@ import {
     ExecuteEventType
 } from "../environment/environment"
 import { getRuntimeEnvironment } from "./environment"
+import { runWithSpan } from "../tracing/tracing";
 
 export async function run() {
     const environment = await getRuntimeEnvironment()
 
     await environment.runInAsyncScope(async () => {
-        if (environment.configure) {
-            await environment.configure()
-        }
 
-        await dispatchEvent({
-            type: ConfigureEventType,
-            environment,
-            parallel: false
-        })
+        await runWithSpan("environment", { attributes: { name: environment.name } }, async () => {
 
-        if (environment.postConfigure) {
-            environment.postConfigure()
-        }
+            await runWithSpan("environment_configure", {}, () => {
+                if (environment.configure) {
+                    environment.configure()
+                }
+            })
 
-        try {
             await dispatchEvent({
-                type: ExecuteEventType,
+                type: ConfigureEventType,
                 environment,
                 parallel: false
             })
-            await environment.waitForServices()
-        } catch (error) {
-            await dispatchEvent({
-                type: ErrorEventType,
-                error
+
+            await runWithSpan("environment_post_configure", {}, () => {
+                if (environment.postConfigure) {
+                    environment.postConfigure()
+                }
             })
-        } finally {
-            await dispatchEvent({
-                type: CompleteEventType,
-                environment
-            })
-        }
+
+            try {
+                await dispatchEvent({
+                    type: ExecuteEventType,
+                    environment,
+                    parallel: false
+                })
+                await runWithSpan("environment_wait_for_services", {}, () => environment.waitForServices())
+            } catch (error) {
+                await dispatchEvent({
+                    type: ErrorEventType,
+                    error
+                })
+            } finally {
+                await dispatchEvent({
+                    type: CompleteEventType,
+                    environment
+                })
+            }
+
+        })
+
     })
 }
