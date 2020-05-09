@@ -18,7 +18,7 @@
   "scripts": {
     "build": "rm -rf esnext && mkdir esnext && tsc && npm run postbuild",
     "postbuild": "node scripts/post-build.js",
-    "example": "node scripts/example.node.js"
+    "example": "node --trace-warnings scripts/example.node.js"
   },
   "esm": {
     "cjs": true,
@@ -29,6 +29,7 @@
     "node": ">=14.1.0"
   },
   "dependencies": {
+    "@edwardmx/noop": "^1.0.1",
     "@opennetwork/http-representation": "^3.0.0",
     "@opennetwork/http-representation-node": "^3.0.0",
     "@opentelemetry/api": "^0.7.0",

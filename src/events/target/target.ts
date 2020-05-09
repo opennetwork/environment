@@ -196,7 +196,7 @@ export class EventTarget implements EventTarget {
     }
 }
 
-function isSignalHandled(event: Event, error: unknown) {
+export function isSignalHandled(event: Event, error: unknown) {
     if (isSignalEvent(event) && event.signal.aborted && error instanceof Error && isAbortError(error)) {
         return true
     }

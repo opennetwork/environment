@@ -22,12 +22,27 @@ import AbortController from "abort-controller";
 //   console.log({ wildcardEvent: event })
 // })
 
-// addEventListener("fetch", function (event) {
-//   event.respondWith(new Response("Hello !", {
-//     status: 200,
-//     headers: {}
-//   }))
-// })
+addEventListener("fetch", async function (event) {
+  const response = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      console.log("Fetch Responding")
+      resolve(new Response("Hello !", {
+        status: 200,
+        headers: {}
+      }))
+    }, 45000)
+    event.signal.addEventListener("abort", () => {
+      console.log("Fetch Responder aborted")
+      clearTimeout(timeout)
+      const error = new Error()
+      error.name = "AbortError"
+      reject(error)
+    })
+  })
+  response.catch(error => console.log("Caught here as well!!!", error))
+  event.respondWith(response)
+  return response
+})
 
 addEventListener("Aborting only event", async function(event) {
   if (isSignalEvent(event)) {

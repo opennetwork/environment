@@ -15,6 +15,8 @@ import {
     ErrorEvent
 } from "./events"
 import { EnvironmentContext } from "./context"
+import noop from "@edwardmx/noop"
+import { error as traceError } from "../tracing/tracing"
 
 export * from "./events"
 export * from "./context"
@@ -33,6 +35,7 @@ export interface Environment extends EnvironmentEventTarget {
 export class Environment extends EnvironmentEventTarget implements Environment {
 
     #services: Promise<unknown>[] = []
+    #serviceTimestamp: WeakMap<Promise<unknown>, number> = new WeakMap<Promise<unknown>, number>()
     #environments: Environment[] = []
 
     constructor(public name: string) {
@@ -61,6 +64,9 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
     addService(promise: Promise<unknown>): void {
         if (!this.#services.includes(promise)) {
+            // Ensure we do not trigger an unhandled promise, we will handle it, it will be reported
+            // at the end of the service
+            promise.catch(noop)
             this.#services.push(promise)
             const remove = () => this.#removeService(promise)
             // Remove once we no longer need to wait for it
@@ -78,12 +84,24 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
     async waitForServices(): Promise<void> {
         const services = this.#services.slice()
+        const servicesResultsPromise = Promise.allSettled(services)
+
         const environments = this.#environments.slice()
-        await Promise.all([
-            ...services,
-            ...environments.map(environment => environment.waitForServices())
-        ])
+        const environmentsResultsPromise = Promise.allSettled(environments.map(environment => environment.waitForServices()))
+
+        await Promise.all([servicesResultsPromise, environmentsResultsPromise])
         services.forEach(this.#removeService)
+
+        const results = [
+            ...await servicesResultsPromise,
+            ...await environmentsResultsPromise
+        ]
+
+        const rejected = results.filter((result): result is PromiseRejectedResult => result.status === "rejected")
+        if (rejected.length) {
+            rejected.forEach(result => traceError(result.reason))
+            throw new Error(`${rejected.length} uncaught error${rejected.length === 1 ? "" : "s"}`)
+        }
     }
 
 }

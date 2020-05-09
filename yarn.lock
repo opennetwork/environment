@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@edwardmx/noop@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/@edwardmx/noop/-/noop-1.0.1.tgz#184b371febe5a719cd144fa8f6342a0e9023aecc"
+  integrity sha512-X2gftuabV5jAs+SkdvhgDZQ9GErGtZXh0zMPKJbevjpsZF74ulMygg1eYlNn7lSLcDP9pFVwU2ScEmlS0fYjaA==
+
 "@opennetwork/http-representation-node@^3.0.0":
   version "3.0.0"
   resolved "https://registry.npmjs.org/@opennetwork/http-representation-node/-/http-representation-node-3.0.0.tgz#5e9df9e2126fa9c5d99b84e5425129655d0b9c02"
