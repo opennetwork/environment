@@ -66,7 +66,11 @@ export class Environment extends EnvironmentEventTarget implements Environment {
         if (!this.#services.includes(promise)) {
             // Ensure we do not trigger an unhandled promise, we will handle it, it will be reported
             // at the end of the service
-            this.#services.push(promise.catch(noop))
+            // TODO collect this error
+            this.#services.push(promise.catch(error => {
+               traceError(error)
+               throw error
+            }))
             const remove = () => this.#removeService(promise)
             // Remove once we no longer need to wait for it
             // TODO decide if should be added to catch as well
@@ -98,7 +102,6 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
         const rejected = results.filter((result): result is PromiseRejectedResult => result.status === "rejected")
         if (rejected.length) {
-            rejected.forEach(result => traceError(result.reason))
             throw new Error(`${rejected.length} uncaught error${rejected.length === 1 ? "" : "s"}`)
         }
     }

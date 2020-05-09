@@ -34,7 +34,7 @@ addEventListener("fetch", async function (event) {
 
       },
       // Simulate request time here, if FETCH_SERVICE_ABORT_ON_TIMEOUT=true then timeout will be 30 seconds by defaults
-      1000
+      20
     )
     event.signal.addEventListener("abort", () => {
       console.log("Fetch Responder aborted")
