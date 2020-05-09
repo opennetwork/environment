@@ -108,9 +108,11 @@ export async function start(): Promise<void> {
                 request.on("aborted", () => abort("request_aborted"))
                 // We will abort on close to indicate to handlers that we can no longer accept a response
                 request.on("close", () => abort("request_closed"))
-                const danglingPromise = responded.then(
-                    () => abort("responded"),
-                    () => abort("responded_with_error")
+                environment.addService(
+                    responded.then(
+                        () => abort("responded"),
+                        () => abort("responded_with_error")
+                    )
                 )
                 if (hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT")) {
                     timeout = setTimeout(() => {
@@ -123,7 +125,6 @@ export async function start(): Promise<void> {
                 await environment.runInAsyncScope(async () => {
                     await dispatchEvent(event)
                 })
-                await danglingPromise
                 const httpResponse = await responded
                 if (typeof timeout === "number") {
                     clearTimeout(timeout)

@@ -15,7 +15,6 @@ import {
     ErrorEvent
 } from "./events"
 import { EnvironmentContext } from "./context"
-import noop from "@edwardmx/noop"
 import { error as traceError } from "../tracing/tracing"
 
 export * from "./events"
