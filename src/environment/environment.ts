@@ -64,17 +64,14 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
     addService(promise: Promise<unknown>): void {
         if (!this.#services.includes(promise)) {
-            // Ensure we do not trigger an unhandled promise, we will handle it, it will be reported
-            // at the end of the service
-            // TODO collect this error
+            // Ensure we do not trigger an unhandled promise, we will handle it, it will be reported using a trace
             this.#services.push(promise.catch(error => {
                traceError(error)
-               throw error
             }))
             const remove = () => this.#removeService(promise)
             // Remove once we no longer need to wait for it
             // TODO decide if should be added to catch as well
-            promise.then(remove)
+            promise.then(remove, remove)
         }
     }
 
@@ -87,23 +84,11 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
     async waitForServices(): Promise<void> {
         const services = this.#services.slice()
-        const servicesResultsPromise = Promise.allSettled(services)
-
         const environments = this.#environments.slice()
-        const environmentsResultsPromise = Promise.allSettled(environments.map(environment => environment.waitForServices()))
-
-        await Promise.all([servicesResultsPromise, environmentsResultsPromise])
-        services.forEach(this.#removeService)
-
-        const results = [
-            ...await servicesResultsPromise,
-            ...await environmentsResultsPromise
-        ]
-
-        const rejected = results.filter((result): result is PromiseRejectedResult => result.status === "rejected")
-        if (rejected.length) {
-            throw new Error(`${rejected.length} uncaught error${rejected.length === 1 ? "" : "s"}`)
-        }
+        await Promise.all([
+            ...services,
+            ...environments.map(environment => environment.waitForServices())
+        ])
     }
 
 }
