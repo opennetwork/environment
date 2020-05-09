@@ -66,8 +66,7 @@ export class Environment extends EnvironmentEventTarget implements Environment {
         if (!this.#services.includes(promise)) {
             // Ensure we do not trigger an unhandled promise, we will handle it, it will be reported
             // at the end of the service
-            promise.catch(noop)
-            this.#services.push(promise)
+            this.#services.push(promise.catch(noop))
             const remove = () => this.#removeService(promise)
             // Remove once we no longer need to wait for it
             // TODO decide if should be added to catch as well

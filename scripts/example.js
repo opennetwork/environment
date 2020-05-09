@@ -39,9 +39,8 @@ addEventListener("fetch", async function (event) {
       reject(error)
     })
   })
-  response.catch(error => console.log("Caught here as well!!!", error))
   event.respondWith(response)
-  return response
+  return response.catch(error => console.log("Caught before returning", error))
 })
 
 addEventListener("Aborting only event", async function(event) {

@@ -85,26 +85,26 @@ export async function start(): Promise<void> {
 
             const { resolve: respondWith, reject: respondWithError, promise: responded } = defer<Response>()
 
+            responded.catch(error => console.log("First caught", { error }))
+
             const event: FetchEvent = {
                 type: FetchEventType,
                 request: httpRequest,
                 respondWith(httpResponse: Response | Promise<Response>): void {
-                    const promise = Promise.resolve(httpResponse)
-                    if (httpResponse instanceof Promise) {
-                        httpResponse.catch(() => console.log("Caught"))
-                    }
-                    environment.addService(promise)
-                    promise
-                        .then(respondWith)
-                        .catch(error => {
-                            if (isSignalHandled(event, error)) {
-                                return
-                            }
-                            respondWithError(error)
-                        })
-                        .catch(error => {
-                            console.log("Uncaught error here!!!", { error })
-                        })
+                    environment.addService(
+                        Promise.resolve(httpResponse)
+                            .then(respondWith)
+                            .catch(error => {
+                                console.log("Catching in main catcher", error, isSignalHandled(event, error))
+                                if (isSignalHandled(event, error)) {
+                                    return
+                                }
+                                respondWithError(error)
+                            })
+                            .catch(error => {
+                                console.log("Uncaught error here!!!", { error })
+                            })
+                    )
                 },
                 async waitUntil(promise: Promise<unknown>): Promise<void> {
                     environment.addService(promise)
@@ -114,18 +114,7 @@ export async function start(): Promise<void> {
                 signal: controller.signal
             }
 
-            console.log("FETCH_SERVICE_ABORT_ON_TIMEOUT", hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT"))
-
-            let timeout
-            if (hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT")) {
-                timeout = setTimeout(() => {
-                    console.log("timeout")
-                    abort("timed_out")
-                    respondWith(new Response("", {
-                        status: 408
-                    }))
-                }, 1000)
-            }
+            let timeout: unknown
 
             try {
                 request.on("aborted", () => abort("request_aborted"))
@@ -137,6 +126,16 @@ export async function start(): Promise<void> {
                     () => abort("responded_with_error")
                 )
 
+                if (hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT")) {
+                    timeout = setTimeout(() => {
+                        console.log("timeout")
+                        abort("timed_out")
+                        respondWith(new Response("", {
+                            status: 408
+                        }))
+                    }, 1000)
+                }
+
                 await environment.runInAsyncScope(async () => {
                     await dispatchEvent(event)
                 })
@@ -145,6 +144,10 @@ export async function start(): Promise<void> {
 
                 const httpResponse = await responded
 
+                if (typeof timeout === "number") {
+                    clearTimeout(timeout)
+                }
+
                 trace("response", {
                     "http.status": httpResponse.status
                 })
@@ -152,10 +155,9 @@ export async function start(): Promise<void> {
                 await sendResponse(httpResponse, httpRequest, response)
 
                 trace("request_end")
+            } catch(e) {
+                console.log("Caught here???", e)
             } finally {
-                if (typeof timeout === "number") {
-                    clearTimeout(timeout)
-                }
 
                 await responded
 
@@ -163,6 +165,10 @@ export async function start(): Promise<void> {
             }
 
             function abort(reason?: string) {
+                if (typeof timeout === "number") {
+                    clearTimeout(timeout)
+                }
+
                 if (controller.signal.aborted) {
                     // Already aborted, no need to do it again!
                     return

@@ -139,7 +139,14 @@ export class EventTarget implements EventTarget {
                             await promise
                         } catch (error) {
                             if (!isSignalHandled(event, error)) {
-                                throw error
+                                if (await this.hasEventListener("error")) {
+                                    await this.dispatchEvent({
+                                        type: "error",
+                                        error
+                                    })
+                                } else {
+                                    throw error
+                                }
                             }
                         }
                         if (isSignalEvent(event) && event.signal.aborted) {
@@ -163,6 +170,7 @@ export class EventTarget implements EventTarget {
 
                     if (rejected.length) {
                         let unhandled = rejected
+                        console.log("ETP", { unhandled })
 
                         // If the event was aborted, then allow abort errors to occur, and handle these as handled errors
                         // The dispatcher does not care about this because they requested it
@@ -180,8 +188,16 @@ export class EventTarget implements EventTarget {
                         }
 
                         if (unhandled[0]) {
-                            trace("unhandled_errors", { unhandled })
-                            throw unhandled[0].reason
+                            if (await this.hasEventListener("error")) {
+                                await this.dispatchEvent({
+                                    type: "error",
+                                    error: unhandled[0].reason,
+                                    errors: unhandled.map(({ reason }) => reason)
+                                })
+                            } else {
+                                trace("unhandled_errors", { unhandled })
+                                throw unhandled[0].reason
+                            }
                         }
                     }
                 }
