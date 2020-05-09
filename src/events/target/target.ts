@@ -1,17 +1,27 @@
-import {Event, isParallelEvent} from "../event/event"
+import { Event } from "../event/event"
 import { Environment, getEnvironment } from "../../environment/environment"
 import { getEvent, runWithEvent } from "../event/dispatcher"
 import { getEventContext, EventListener, hasEventContext } from "../event/context"
-import { EventCallback } from "../event/callback"
+import { EventCallback, SyncEventCallback } from "../event/callback"
 import { EventDescriptor } from "../event/descriptor"
 import { matchEventCallback } from "../event/callback"
-import { runWithSpan } from "../../tracing/span"
+import { runWithSpanOptional, trace } from "../../tracing/span"
+import { isParallelEvent } from "../parallel-event"
+import { isSignalEvent } from "../signal-event"
+import { isAbortError } from "../../errors/errors";
 
 export {
     EventCallback
 }
 
-export interface EventTarget<This = unknown> {
+export interface SyncEventTarget<Event = unknown, This = unknown> {
+    addEventListener(type: string, callback: SyncEventCallback<Event, This>): void
+    removeEventListener(type: string, callback: SyncEventCallback<Event, This>): void
+    dispatchEvent(event: Event): void
+    hasEventListener(type: string, callback?: SyncEventCallback): Promise<boolean>
+}
+
+export interface EventTarget<This = unknown> extends SyncEventTarget<Event, This> {
     addEventListener(type: string, callback: EventCallback<Event, This>): void
     removeEventListener(type: string, callback: EventCallback<Event, This>): void
     dispatchEvent(event: Event): void | Promise<void>
@@ -63,38 +73,48 @@ export class EventTarget implements EventTarget {
 
     async dispatchEvent(event: Event) {
         const listeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
-        const parentEvent = getEvent()
-        const environment = this.#environment || getEnvironment()
 
-        if (environment && hasEventContext(event)) {
-            // TODO decide if we should just do this anyway, it might lead to some confusing things happening so I think it is better to straight up disallow it
-            // In some cases users may expect their `this` scope to stay the same for the events methods, e.g. if the event was created as a class, so this should lead
-            // to them creating a new one or if the event class has a clone function..
-            throw new Error(`Event ${event.type} has already been dispatched, by design we have excluded this pattern as we utilise the event object instance to create unique weak contexts. To dispatch the event again, utilise the spread syntax if the event is an object as so:\n\nawait dispatchEvent({ ...event })\n\nIf the event creating using a constructor, please re-create or clone the event before invoking dispatchEvent again for this event instance`)
-        }
+        await runWithSpanOptional(`event_dispatch`, { attributes: { event, listeners } }, async () => {
 
-        if (!listeners.length) {
-            if (!parentEvent) {
+            // Don't even dispatch an aborted event
+            if (isSignalEvent(event) && event.signal.aborted) {
                 return
             }
-            const parentEventContext = getEventContext(parentEvent)
-            parentEventContext.dispatchedEvents.push({
-                target: this,
-                event
-            })
-        }
 
-        if (environment && parentEvent) {
-            const eventContext = getEventContext(event)
-            eventContext.dispatcher = parentEvent
-        }
+            const parentEvent = getEvent()
+            const environment = this.#environment || getEnvironment()
 
-        await runWithSpan(`event:callbacks:${event.type}`, { attributes: { event, listeners } }, async () => {
+            if (environment && hasEventContext(event)) {
+                // TODO decide if we should just do this anyway, it might lead to some confusing things happening so I think it is better to straight up disallow it
+                // In some cases users may expect their `this` scope to stay the same for the events methods, e.g. if the event was created as a class, so this should lead
+                // to them creating a new one or if the event class has a clone function..
+                const error: Error = new Error(`Event ${event.type} has already been dispatched, by design we have excluded this pattern as we utilise the event object instance to create unique weak contexts. To dispatch the event again, utilise the spread syntax if the event is an object as so:\n\nawait dispatchEvent({ ...event })\n\nIf the event creating using a constructor, please re-create or clone the event before invoking dispatchEvent again for this event instance`)
+                error.name = "EventAlreadyDispatchedError"
+                throw error
+            }
+
+            if (!listeners.length) {
+                if (!parentEvent) {
+                    return
+                }
+                const parentEventContext = getEventContext(parentEvent)
+                parentEventContext.dispatchedEvents.push({
+                    target: this,
+                    event
+                })
+            }
+
+            if (environment && parentEvent) {
+                const eventContext = getEventContext(event)
+                eventContext.dispatcher = parentEvent
+            }
+
             await runWithEvent(event, async () => {
                 const parallel = isParallelEvent(event)
                 const promises = []
                 for (let index = 0; index < listeners.length; index += 1) {
                     const descriptor = listeners[index]
+
                     if (environment && parentEvent) {
                         const parentEventContext = getEventContext(parentEvent)
                         parentEventContext.dispatchedEvents.push({
@@ -103,7 +123,8 @@ export class EventTarget implements EventTarget {
                             descriptor
                         })
                     }
-                    const promise = runWithSpan(`event:callback:${index}:${event.type}`, {}, async () => {
+
+                    const promise = runWithSpanOptional("event_dispatched", { attributes: { event, listener: index } }, async () => {
                         if (environment) {
                             await environment.runInAsyncScope(async () => {
                                 await descriptor.callback.call(this.#thisValue, event)
@@ -112,8 +133,13 @@ export class EventTarget implements EventTarget {
                             await descriptor.callback.call(this.#thisValue, event)
                         }
                     })
+
                     if (!parallel) {
                         await promise
+                        if (isSignalEvent(event) && event.signal.aborted) {
+                            // bye
+                            return
+                        }
                     } else {
                         promises.push(promise)
                     }
@@ -121,8 +147,37 @@ export class EventTarget implements EventTarget {
                 if (promises.length) {
                     // Allows for all promises to settle finish so we can stay within the event, we then
                     // will utilise Promise.all which will reject with the first rejected promise
-                    await Promise.allSettled(promises)
-                    await Promise.all(promises)
+                    const results = await Promise.allSettled(promises)
+
+                    const rejected = results.filter(
+                        (result): result is PromiseRejectedResult => {
+                            return result.status === "rejected"
+                        }
+                    )
+
+                    if (rejected.length) {
+                        let unhandled = rejected
+
+                        // If the event was aborted, then allow abort errors to occur, and handle these as handled errors
+                        // The dispatcher does not care about this because they requested it
+                        //
+                        // There may be other unhandled errors that are more pressing to the task they are doing.
+                        //
+                        // The dispatcher can throw an abort error if they need to throw it up the chain
+                        if (isSignalEvent(event) && event.signal.aborted) {
+                            const before = unhandled.length
+                            unhandled = unhandled.filter(result => !(result.reason instanceof Error && isAbortError(result.reason)))
+                            const handled = before - unhandled.length
+                            if (handled) {
+                                trace("abort_error_handled", { handled })
+                            }
+                        }
+
+                        if (unhandled[0]) {
+                            trace("unhandled_errors", { unhandled })
+                            throw unhandled[0].reason
+                        }
+                    }
                 }
             })
         })

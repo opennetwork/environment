@@ -1,8 +1,17 @@
 import { getTracer } from "./tracer"
 import { createLocalStorage } from "../local-storage"
 import { Span, SpanOptions, Attributes } from "@opentelemetry/api"
+import { getEnvironment } from "../environment/environment";
 
 const localStorage = createLocalStorage<Span>()
+
+export async function runWithSpanOptional(name: string, options: SpanOptions, callback: () => void | Promise<void>) {
+    const environment = getEnvironment()
+    if (!environment) {
+        return callback()
+    }
+    return runWithSpan(name, options, callback)
+}
 
 export async function runWithSpan(name: string, options: SpanOptions, callback: () => void | Promise<void>) {
     const tracer = getTracer()
