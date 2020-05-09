@@ -12,6 +12,7 @@ import { fromRequest, sendResponse } from "@opennetwork/http-representation-node
 import { Response } from "@opennetwork/http-representation"
 import { getRuntimeEnvironment } from "../environment"
 import { runWithSpan, trace, error } from "../../tracing/span"
+import AbortController from "abort-controller";
 
 export async function start(): Promise<void> {
     const port = getPort("FETCH_SERVICE_PORT")
@@ -76,6 +77,8 @@ export async function start(): Promise<void> {
 
             const environment = await getRuntimeEnvironment()
 
+            const controller = new AbortController()
+
             const event: FetchEvent = {
                 type: FetchEventType,
                 request: httpRequest,
@@ -96,8 +99,13 @@ export async function start(): Promise<void> {
                     environment.addService(promise)
                     await promise
                 },
-                parallel: false
+                parallel: false,
+                signal: controller.signal
             }
+
+            request.on("close", () => {
+                controller.abort()
+            })
 
             await environment.runInAsyncScope(async () => {
                 await dispatchEvent(event)
