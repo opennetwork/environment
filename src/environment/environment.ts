@@ -20,7 +20,6 @@ export interface Environment extends EnvironmentEventTarget {
 export class Environment extends EnvironmentEventTarget implements Environment {
 
     #services: Promise<unknown>[] = []
-    #serviceTimestamp: WeakMap<Promise<unknown>, number> = new WeakMap<Promise<unknown>, number>()
     #environments: Environment[] = []
 
     constructor(public name: string) {
