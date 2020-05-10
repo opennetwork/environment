@@ -1,11 +1,8 @@
 import {
   addEventListener,
-  ExecuteEventType,
-  ConfigureEventType,
   dispatchEvent,
   getEnvironmentContext,
   getEventContext,
-  CompleteEventType,
   getTracer,
   createFlag,
   setFlag,
@@ -146,7 +143,7 @@ addEventListener("Custom event!", async function(event) {
   await dispatchEvent({ type: "Some other event" })
 })
 
-addEventListener(ConfigureEventType, async function configure(event) {
+addEventListener("configure", async function configure(event) {
   createFlag("FLAG")
 
   setFlag("FLAG")
@@ -178,7 +175,7 @@ addEventListener(ConfigureEventType, async function configure(event) {
   }
 })
 
-addEventListener(ExecuteEventType, async function handler(event) {
+addEventListener("execute", async function handler(event) {
   console.log({ context: getEnvironmentContext() })
   await dispatchEvent({ type: "Custom event!" })
 

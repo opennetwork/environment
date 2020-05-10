@@ -1,10 +1,4 @@
-import {
-    CompleteEventType,
-    ConfigureEventType,
-    dispatchEvent,
-    ErrorEventType,
-    ExecuteEventType
-} from "../environment/environment"
+import { dispatchEvent } from "../environment/environment"
 import { getRuntimeEnvironment } from "./environment"
 import { runWithSpan } from "../tracing/tracing"
 import { EnvironmentConfig, setEnvironmentConfig } from "../config/config"
@@ -26,7 +20,7 @@ export async function run(config: EnvironmentConfig) {
                 })
 
                 await dispatchEvent({
-                    type: ConfigureEventType,
+                    type: "configure",
                     environment,
                     parallel: false
                 })
@@ -39,19 +33,19 @@ export async function run(config: EnvironmentConfig) {
 
                 try {
                     await dispatchEvent({
-                        type: ExecuteEventType,
+                        type: "execute",
                         environment,
                         parallel: false
                     })
                     await runWithSpan("environment_wait_for_services", {}, () => environment.waitForServices())
                 } catch (error) {
                     await dispatchEvent({
-                        type: ErrorEventType,
+                        type: "error",
                         error
                     })
                 } finally {
                     await dispatchEvent({
-                        type: CompleteEventType,
+                        type: "complete",
                         environment
                     })
                 }

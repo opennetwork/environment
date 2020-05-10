@@ -3,8 +3,7 @@ import { createServer, IncomingMessage, ServerResponse } from "http"
 import {
     dispatchEvent,
     addEventListener,
-    CompleteEventType,
-    hasEventListener, ConfigureEventType
+    hasEventListener
 } from "../../environment/environment"
 import { fromRequest, sendResponse } from "@opennetwork/http-representation-node"
 import { Request, Response } from "@opennetwork/http-representation"
@@ -37,7 +36,7 @@ export interface FetchServiceConfig {
     timeout?: number | boolean
 }
 
-addEventListener(ConfigureEventType, () => {
+addEventListener("configure", async () => {
     const config = getEnvironmentConfig()
 
     if (config.fetchService) {
@@ -57,7 +56,7 @@ addEventListener(ConfigureEventType, () => {
         baseUrl = "https://fetch.spec.whatwg.org"
     }
 
-    setEnvironmentConfig({
+    await setEnvironmentConfig({
         ...config,
         fetchService: {
             port,
@@ -98,7 +97,7 @@ export async function start(): Promise<void> {
         }
     )
 
-    addEventListener(CompleteEventType, close)
+    addEventListener("complete", close)
 
     return new Promise(
         resolve => server.once("close", resolve)
