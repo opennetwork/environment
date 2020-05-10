@@ -1,4 +1,5 @@
 import { Environment, getEnvironment, dispatchEvent } from "../environment/environment"
+import { Event } from "../events/events"
 
 declare global {
 
@@ -8,13 +9,14 @@ declare global {
 
 }
 
+export interface ConfigUpdateEvent extends Event<"config:update"> {
+    config: Readonly<EnvironmentConfig>
+}
+
 declare global {
 
     interface EnvironmentEvents {
-        "config:update": {
-            type: "config:update",
-            config: Readonly<EnvironmentConfig>
-        }
+        "config:update": ConfigUpdateEvent
     }
 }
 
@@ -44,8 +46,9 @@ export async function setEnvironmentConfig(environmentConfig: EnvironmentConfig)
     // TODO deep freeze
     const frozen = Object.freeze(environmentConfig)
     config.set(environment, frozen)
-    await dispatchEvent({
+    const event: ConfigUpdateEvent = {
         type: "config:update",
         config: frozen
-    })
+    }
+    await dispatchEvent(event)
 }

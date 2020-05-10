@@ -1,4 +1,4 @@
-import {EventCallback, Event, EventTarget} from "../events/events"
+import { EventCallback, Event, EventTarget } from "../events/events"
 import { EnvironmentEventTarget } from "./events"
 import { error as traceError } from "../tracing/tracing"
 import { EnvironmentEvents } from "../events/events"
@@ -90,7 +90,7 @@ export function removeEventListener(type: string, callback: EventCallback) {
     defaultEventTarget.removeEventListener(type, callback)
 }
 
-export async function dispatchEvent(event: EnvironmentEvents[keyof EnvironmentEvents]): Promise<void>
+export async function dispatchEvent<Type extends keyof EnvironmentEvents>(event: EnvironmentEvents[Type]): Promise<void>
 export async function dispatchEvent(event: Event): Promise<void>
 export async function dispatchEvent(event: Event): Promise<void> {
     await defaultEventTarget.dispatchEvent(event)
