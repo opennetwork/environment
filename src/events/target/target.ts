@@ -182,7 +182,7 @@ export class EventTarget implements EventTarget {
                         // The dispatcher can throw an abort error if they need to throw it up the chain
                         if (isSignalEvent(event) && event.signal.aborted) {
                             const before = unhandled.length
-                            unhandled = unhandled.filter(result => isSignalHandled(event, result.reason))
+                            unhandled = unhandled.filter(result => !isSignalHandled(event, result.reason))
                             const handled = before - unhandled.length
                             if (handled) {
                                 trace("error_handled", { handled })
