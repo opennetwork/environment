@@ -89,7 +89,8 @@ export function removeEventListener(type: string, callback: EventCallback) {
     defaultEventTarget.removeEventListener(type, callback)
 }
 
-export async function dispatchEvent<Type extends keyof EnvironmentEvents>(event: EnvironmentEvents[Type]): Promise<void>
+// TODO this doesn't seem to typecheck as nicely
+export async function dispatchEvent<Type extends (keyof EnvironmentEvents & string)>(event: EnvironmentEvents[Type] & Event<Type>): Promise<void>
 export async function dispatchEvent(event: Event): Promise<void>
 export async function dispatchEvent(event: Event): Promise<void> {
     await defaultEventTarget.dispatchEvent(event)
