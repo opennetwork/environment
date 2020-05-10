@@ -79,7 +79,7 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
 const defaultEventTarget = new EventTarget()
 
-export function addEventListener<Type extends keyof EnvironmentEvents>(type: Type, callback: EventCallback<EnvironmentEvents[Type]>): void
+export function addEventListener<Type extends (keyof EnvironmentEvents & string)>(type: Type, callback: EventCallback<EnvironmentEvents[Type] & Event<Type>>): void
 export function addEventListener(type: string, callback: EventCallback): void
 export function addEventListener(type: string, callback: EventCallback<any>): void {
     defaultEventTarget.addEventListener(type, callback)
