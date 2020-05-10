@@ -1,3 +1,5 @@
+import { Event } from "./event/event";
+
 export * from "./event/event"
 export * from "./event/context"
 export * from "./event/dispatcher"
@@ -10,7 +12,7 @@ export * from "./respond-event"
 declare global {
 
     interface EnvironmentEvents {
-
+        [key: string]: Event
     }
 
 }

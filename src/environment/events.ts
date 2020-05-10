@@ -1,5 +1,5 @@
-import {Event, EventCallback, EventTarget} from "../events/events"
-import {Environment} from "./environment"
+import { Event, EventCallback, EventTarget } from "../events/events"
+import { Environment } from "./environment"
 
 export interface ConfigureEvent extends Event<"configure"> {
     environment: Environment
