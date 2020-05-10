@@ -126,6 +126,8 @@ export async function start(): Promise<void> {
         async function run() {
             const environment = await getRuntimeEnvironment()
             const controller = new AbortController()
+            environment.addAbortController(controller)
+
             const { resolve: respondWith, reject: respondWithError, promise: responded } = defer<Response>()
             const event: FetchEvent = {
                 type: "fetch",

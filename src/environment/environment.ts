@@ -2,9 +2,19 @@ import { EventCallback, Event, EventTarget } from "../events/events"
 import { EnvironmentEventTarget } from "./events"
 import { error as traceError } from "../tracing/tracing"
 import { EnvironmentEvents } from "../events/events"
+import { AbortController, isAbortController } from "../events/events"
 
 export * from "./events"
 export * from "./context"
+
+export interface EnvironmentClosable {
+    close(): void
+}
+
+export interface AbortControllerLike {
+    signal: unknown
+    abort: unknown
+}
 
 export interface Environment extends EnvironmentEventTarget {
     name: string
@@ -13,6 +23,8 @@ export interface Environment extends EnvironmentEventTarget {
     postConfigure?(): void | Promise<void>
     addEnvironment(environment: Environment): void
     addService(promise: Promise<unknown>): void
+    addClosable(closable: EnvironmentClosable): void
+    addAbortController(controller: AbortControllerLike): void
     waitForServices(): Promise<void>
     end(): Promise<void>
 }
@@ -20,6 +32,8 @@ export interface Environment extends EnvironmentEventTarget {
 export class Environment extends EnvironmentEventTarget implements Environment {
 
     #services: Promise<unknown>[] = []
+    #closable: EnvironmentClosable[] = []
+    #abortControllers: AbortController[] = []
     #environments: Environment[] = []
 
     constructor(public name: string) {
@@ -66,6 +80,32 @@ export class Environment extends EnvironmentEventTarget implements Environment {
         }
     }
 
+    addClosable(closable: EnvironmentClosable): void {
+        if (!this.#closable.includes(closable)) {
+            this.#closable.push(closable)
+        }
+    }
+
+    addAbortController(controller: AbortControllerLike): void {
+        if (!isAbortController(controller)) {
+            return
+        }
+        if (controller.signal.aborted) {
+            return
+        }
+        if (!this.#abortControllers.includes(controller)) {
+            this.#abortControllers.push(controller)
+            controller.signal.addEventListener("abort", this.#removeAbortController.bind(this, controller))
+        }
+    }
+
+    #removeAbortController = (controller: AbortController) => {
+        const index = this.#abortControllers.indexOf(controller)
+        if (index > -1) {
+            this.#abortControllers.splice(index, 1)
+        }
+    }
+
     async waitForServices(): Promise<void> {
         const services = this.#services.slice()
         const environments = this.#environments.slice()
@@ -73,6 +113,20 @@ export class Environment extends EnvironmentEventTarget implements Environment {
             ...services,
             ...environments.map(environment => environment.waitForServices())
         ])
+    }
+
+    async end(): Promise<void> {
+        const abortControllers = this.#abortControllers.slice()
+        abortControllers.forEach(controller => controller.abort())
+
+        const closable = this.#closable.slice()
+        closable.forEach(value => {
+            value.close()
+            const index = this.#closable.indexOf(value)
+            this.#closable.splice(index, 1)
+        })
+
+        await this.waitForServices()
     }
 
 }
@@ -89,10 +143,7 @@ export function removeEventListener(type: string, callback: EventCallback) {
     defaultEventTarget.removeEventListener(type, callback)
 }
 
-// TODO this doesn't seem to typecheck as nicely
-export async function dispatchEvent<Type extends (keyof EnvironmentEvents & string)>(event: EnvironmentEvents[Type] & Event<Type>): Promise<void>
-export async function dispatchEvent(event: Event): Promise<void>
-export async function dispatchEvent(event: Event): Promise<void> {
+export async function dispatchEvent<Type extends (keyof EnvironmentEvents & string)>(event: EnvironmentEvents[Type] & Event<Type>): Promise<void> {
     await defaultEventTarget.dispatchEvent(event)
 }
 

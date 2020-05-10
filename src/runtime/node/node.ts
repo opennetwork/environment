@@ -29,6 +29,4 @@ export class Environment extends EnvironmentTemplate {
         this.addService(startFetchService())
     }
 
-
-
 }

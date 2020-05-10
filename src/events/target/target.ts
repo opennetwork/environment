@@ -18,7 +18,6 @@ export interface SyncEventTarget<Event = unknown, This = unknown> {
     addEventListener(type: string, callback: SyncEventCallback<Event, This>): void
     removeEventListener(type: string, callback: SyncEventCallback<Event, This>): void
     dispatchEvent(event: Event): void
-    hasEventListener(type: string, callback?: SyncEventCallback): Promise<boolean>
 }
 
 export interface EventTarget<This = unknown> extends SyncEventTarget<Event, This> {

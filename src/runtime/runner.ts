@@ -48,6 +48,9 @@ export async function run(config: EnvironmentConfig) {
                         type: "complete",
                         environment
                     })
+                    if (environment.end) {
+                        await environment.end()
+                    }
                 }
 
             })
