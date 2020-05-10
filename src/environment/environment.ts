@@ -17,7 +17,7 @@ export interface AbortControllerLike {
 }
 
 export interface Environment extends EnvironmentEventTarget {
-    name: string
+    readonly name: string
     runInAsyncScope(fn: () => void | Promise<void>): Promise<void>
     configure?(): void | Promise<void>
     postConfigure?(): void | Promise<void>
@@ -36,7 +36,7 @@ export class Environment extends EnvironmentEventTarget implements Environment {
     #abortControllers: AbortController[] = []
     #environments: Environment[] = []
 
-    constructor(public name: string) {
+    constructor(public readonly name: string) {
         super()
     }
 
