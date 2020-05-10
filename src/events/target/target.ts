@@ -115,7 +115,7 @@ export class EventTarget implements EventTarget {
                 for (let index = 0; index < listeners.length; index += 1) {
                     const descriptor = listeners[index]
 
-                    if (!this.#listeners.includes(descriptor)) {
+                    if (!parallel && !this.#listeners.includes(descriptor)) {
                         continue
                     }
 
