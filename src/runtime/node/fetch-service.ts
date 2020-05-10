@@ -4,27 +4,81 @@ import {
     dispatchEvent,
     addEventListener,
     CompleteEventType,
-    FetchEvent,
-    FetchEventType,
-    hasEventListener
+    hasEventListener, ConfigureEventType
 } from "../../environment/environment"
 import { fromRequest, sendResponse } from "@opennetwork/http-representation-node"
-import { Response } from "@opennetwork/http-representation"
+import { Request, Response } from "@opennetwork/http-representation"
 import { getRuntimeEnvironment } from "../environment"
 import { runWithSpan, trace, error as traceError } from "../../tracing/span"
 import AbortController from "abort-controller"
 import { defer } from "../../deferred"
-import { isSignalHandled } from "../../events/events"
+import { isSignalHandled, Event } from "../../events/events"
 import { hasFlag } from "../../flags/flags"
+import { getEnvironmentConfig, setEnvironmentConfig } from "../../config/config"
 
-export async function start(): Promise<void> {
-    const port = getPort("FETCH_SERVICE_PORT")
-    if (!port) {
+export interface FetchEvent extends Event<"fetch"> {
+    request: Request
+    respondWith(response: Response | Promise<Response>): void
+    waitUntil(promise: Promise<unknown>): Promise<void>
+}
+
+declare global {
+
+    interface EnvironmentEvents {
+        fetch: FetchEvent
+    }
+
+}
+
+export interface FetchServiceConfig {
+    port: number
+    onListener?: boolean
+    baseUrl?: string
+    timeout?: number | boolean
+}
+
+addEventListener(ConfigureEventType, () => {
+    const config = getEnvironmentConfig()
+
+    if (config.fetchService) {
         return
     }
 
-    if (hasFlag("FETCH_SERVICE_ON_LISTENER")) {
-        const hasListeners = await hasEventListener(FetchEventType)
+    const port = getPort("FETCH_SERVICE_PORT")
+
+    if (!port) {
+        console.log("No port")
+        return
+    }
+
+    let baseUrl = process.env.FETCH_SERVICE_BASE_URL
+
+    if (!baseUrl) {
+        baseUrl = "https://fetch.spec.whatwg.org"
+    }
+
+    setEnvironmentConfig({
+        ...config,
+        fetchService: {
+            port,
+            baseUrl,
+            onListener: hasFlag("FETCH_SERVICE_ON_LISTENER"),
+            timeout: hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT")
+        }
+    })
+})
+
+export async function start(): Promise<void> {
+    const config = getEnvironmentConfig()
+
+    if (!config.fetchService) {
+        return
+    }
+
+    const { port, onListener, timeout: abortTimeout, baseUrl } = config.fetchService
+
+    if (onListener) {
+        const hasListeners = await hasEventListener("fetch")
 
         if (!hasListeners) {
             // No need to configure, no one is going to hears
@@ -51,13 +105,6 @@ export async function start(): Promise<void> {
     )
 
     function onRequestResponsePair(request: IncomingMessage, response: ServerResponse) {
-
-        let baseUrl = process.env.FETCH_SERVICE_BASE_URL
-
-        if (!baseUrl) {
-            baseUrl = "https://fetch.spec.whatwg.org"
-        }
-
         const httpRequest = fromRequest(
             request,
             baseUrl
@@ -82,7 +129,7 @@ export async function start(): Promise<void> {
             const controller = new AbortController()
             const { resolve: respondWith, reject: respondWithError, promise: responded } = defer<Response>()
             const event: FetchEvent = {
-                type: FetchEventType,
+                type: "fetch",
                 request: httpRequest,
                 respondWith(httpResponse: Response | Promise<Response>): void {
                     environment.addService(
@@ -114,7 +161,7 @@ export async function start(): Promise<void> {
                         () => abort("responded_with_error")
                     )
                 )
-                if (hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT")) {
+                if (abortTimeout) {
                     timeout = setTimeout(() => {
                         abort("timed_out")
                         respondWith(new Response("", {

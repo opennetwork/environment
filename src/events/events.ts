@@ -6,3 +6,17 @@ export * from "./target/target"
 export * from "./parallel-event"
 export * from "./signal-event"
 export * from "./respond-event"
+
+declare global {
+
+    interface EnvironmentEvents {
+
+    }
+
+}
+
+export {
+    EnvironmentEvents
+}
+
+export type EnvironmentEventTypes = EnvironmentEvents[keyof EnvironmentEvents]["type"]

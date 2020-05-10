@@ -8,14 +8,12 @@ import {
     ErrorEventType,
     ExecuteEvent,
     ExecuteEventType,
-    FetchEvent,
-    FetchEventType,
     RenderEvent,
     RenderEventType,
     ErrorEvent
 } from "./events"
-import { EnvironmentContext } from "./context"
 import { error as traceError } from "../tracing/tracing"
+import { EnvironmentEvents } from "../events/events"
 
 export * from "./events"
 export * from "./context"
@@ -94,12 +92,13 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
 const defaultEventTarget = new EventTarget()
 
-export function addEventListener(type: typeof FetchEventType, callback: EventCallback<FetchEvent, EnvironmentContext>): void
-export function addEventListener(type: typeof ExecuteEventType, callback: EventCallback<ExecuteEvent, EnvironmentContext>): void
-export function addEventListener(type: typeof ConfigureEventType, callback: EventCallback<ConfigureEvent, EnvironmentContext>): void
-export function addEventListener(type: typeof CompleteEventType, callback: EventCallback<CompleteEvent, EnvironmentContext>): void
-export function addEventListener(type: typeof ErrorEventType, callback: EventCallback<ErrorEvent, EnvironmentContext>): void
-export function addEventListener(type: typeof RenderEventType, callback: EventCallback<RenderEvent, EnvironmentContext>): void
+export function addEventListener<Type extends keyof EnvironmentEvents>(type: Type, callback: EventCallback<EnvironmentEvents[Type]>): void
+// TODO remove these in favour of using global interface for environment events
+export function addEventListener(type: typeof ExecuteEventType, callback: EventCallback<ExecuteEvent>): void
+export function addEventListener(type: typeof ConfigureEventType, callback: EventCallback<ConfigureEvent>): void
+export function addEventListener(type: typeof CompleteEventType, callback: EventCallback<CompleteEvent>): void
+export function addEventListener(type: typeof ErrorEventType, callback: EventCallback<ErrorEvent>): void
+export function addEventListener(type: typeof RenderEventType, callback: EventCallback<RenderEvent>): void
 export function addEventListener(type: string, callback: EventCallback): void
 export function addEventListener(type: string, callback: EventCallback<any>): void {
     defaultEventTarget.addEventListener(type, callback)
@@ -109,6 +108,7 @@ export function removeEventListener(type: string, callback: EventCallback) {
     defaultEventTarget.removeEventListener(type, callback)
 }
 
+export async function dispatchEvent(event: EnvironmentEvents[keyof EnvironmentEvents]): Promise<void>
 export async function dispatchEvent(event: CompleteEvent): Promise<void>
 export async function dispatchEvent(event: ConfigureEvent): Promise<void>
 export async function dispatchEvent(event: ExecuteEvent): Promise<void>

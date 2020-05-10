@@ -2,10 +2,14 @@ import {Environment, getEnvironment} from "./environment"
 
 export const EnvironmentContextSymbol = Symbol("Environment Context")
 
-declare interface EnvironmentContext {
-    type: typeof EnvironmentContextSymbol
-    [key: string]: unknown
-    [key: number]: unknown
+declare global {
+
+    interface EnvironmentContext {
+        type: typeof EnvironmentContextSymbol
+        [key: string]: unknown
+        [key: number]: unknown
+    }
+
 }
 
 export {

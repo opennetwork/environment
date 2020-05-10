@@ -1,7 +1,8 @@
 import promise from "./example.js"
 
 promise
-  .then(() => {
+  .then(result => {
+    console.log({ result })
     console.log("complete. bye")
     process.exit(0)
   })
