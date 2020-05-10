@@ -8,7 +8,7 @@ import { matchEventCallback } from "../event/callback"
 import { runWithSpanOptional, trace } from "../../tracing/span"
 import { isParallelEvent } from "../parallel-event"
 import { isSignalEvent } from "../signal-event"
-import {AbortError, isAbortError} from "../../errors/errors";
+import { isAbortError } from "../../errors/errors";
 
 export {
     EventCallback
@@ -50,7 +50,8 @@ export class EventTarget implements EventTarget {
             descriptor: {
                 type,
                 callback
-            }
+            },
+            timestamp: Date.now()
         }
         if (listener.isListening()) {
             return
@@ -75,7 +76,6 @@ export class EventTarget implements EventTarget {
         const listeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
 
         await runWithSpanOptional(`event_dispatch`, { attributes: { event, listeners } }, async () => {
-
             // Don't even dispatch an aborted event
             if (isSignalEvent(event) && event.signal.aborted) {
                 return
@@ -100,7 +100,8 @@ export class EventTarget implements EventTarget {
                 const parentEventContext = getEventContext(parentEvent)
                 parentEventContext.dispatchedEvents.push({
                     target: this,
-                    event
+                    event,
+                    timestamp: Date.now()
                 })
             }
 
@@ -120,7 +121,8 @@ export class EventTarget implements EventTarget {
                         parentEventContext.dispatchedEvents.push({
                             target: this,
                             event,
-                            descriptor
+                            descriptor,
+                            timestamp: Date.now()
                         })
                     }
 
@@ -145,6 +147,7 @@ export class EventTarget implements EventTarget {
                                         error
                                     })
                                 } else {
+                                    trace("unhandled_errors", { unhandled: [ { state: "rejected", reason: error } ] })
                                     throw error
                                 }
                             }

@@ -136,7 +136,9 @@ export async function start(): Promise<void> {
                 trace("request_end")
             } finally {
                 abort("finally")
-                await responded
+                environment.addService(responded)
+                // Ensure the promise is completed if it is still in play
+                respondWithError(new Error("Response no longer required"))
             }
 
             function abort(reason?: string) {
