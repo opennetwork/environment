@@ -166,7 +166,7 @@ export async function start(): Promise<void> {
                         respondWith(new Response("", {
                             status: 408
                         }))
-                    }, 30000)
+                    }, typeof abortTimeout === "number" ? abortTimeout : 30000)
                 }
                 await environment.runInAsyncScope(async () => {
                     await dispatchEvent(event)
