@@ -20,8 +20,7 @@ export class Environment extends EnvironmentTemplate {
     }
 
     configure(): void {
-        const flags = Object.keys(process.env)
-            .filter(key => process.env[key] === "true")
+        const flags = Object.keys(process.env).filter(key => process.env[key] === "true")
         flags.forEach(flag => createFlag(flag))
         flags.forEach(flag => setFlag(flag))
     }

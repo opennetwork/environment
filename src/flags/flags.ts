@@ -1,6 +1,6 @@
 import { Flag } from "./flag"
 import { Environment, getEnvironment } from "../environment/environment"
-import {ensureFlag, getFlags} from "./config";
+import { createFlag, getFlags } from "./config"
 
 export * from "./config"
 export * from "./flag"
@@ -21,7 +21,11 @@ export function hasFlag(flag: Flag) {
 
 export function setFlag(flag: Flag) {
     if (!getFlags().has(flag)) {
-        return
+        const autoCreate = hasFlag("ENVIRONMENT_AUTO_CREATE_FLAG")
+        if (!autoCreate) {
+            return
+        }
+        createFlag(flag)
     }
     const environment = getEnvironment()
     if (!environment) {

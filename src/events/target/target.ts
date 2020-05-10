@@ -8,7 +8,7 @@ import { matchEventCallback } from "../event/callback"
 import { runWithSpanOptional, trace } from "../../tracing/span"
 import { isParallelEvent } from "../parallel-event"
 import { isSignalEvent } from "../signal-event"
-import { isAbortError } from "../../errors/errors";
+import { isAbortError } from "../../errors/errors"
 
 export {
     EventCallback
