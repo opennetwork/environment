@@ -1,4 +1,4 @@
-import promise from "./example.js"
+import promise from "./collector-example.js"
 
 promise
   .then(result => {

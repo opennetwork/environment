@@ -9,12 +9,16 @@ export async function runWithEvent(event: Event, callback: () => void | Promise<
     return localStorage.run(event, callback)
 }
 
+const TopLevelEvent: Event = Object.freeze({
+    type: "top"
+})
+
 export function getEvent() {
     const environment = getEnvironment()
     if (!environment) {
-        return undefined
+        return TopLevelEvent
     }
-    return localStorage.getStore()
+    return localStorage.getStore() || TopLevelEvent
 }
 
 export function getDispatcherEvents(event: Event | undefined = getEvent()): Event[] {

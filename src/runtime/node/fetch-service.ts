@@ -46,7 +46,6 @@ addEventListener("configure", async () => {
     const port = getPort("FETCH_SERVICE_PORT")
 
     if (!port) {
-        console.log("No port")
         return
     }
 

@@ -3,8 +3,11 @@
   "name": "@opennetwork/environment",
   "version": "1.0.0",
   "description": "Cross platform JavaScript environment",
-  "main": "esnext/index.js",
-  "exports": "esnext/index.js",
+  "main": "./esnext/index.js",
+  "exports": {
+    ".": "./esnext/index.js",
+    "./esnext/runtime/run.js": "./esnext/runtime/run.js"
+  },
   "author": "Fabian Cook <hello@fabiancook.dev>",
   "license": "MIT",
   "private": false,

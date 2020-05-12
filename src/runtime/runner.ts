@@ -39,6 +39,7 @@ export async function run(config: EnvironmentConfig) {
                     })
                     await runWithSpan("environment_wait_for_services", {}, () => environment.waitForServices())
                 } catch (error) {
+                    console.error({ error })
                     await dispatchEvent({
                         type: "error",
                         error

@@ -152,9 +152,14 @@ export async function hasEventListener(type: string) {
 }
 
 let getEnvironmentFn: (() => Environment | undefined) | undefined
+const topLevelEnvironment = new Environment("top")
 export function getEnvironment() {
-    if (getEnvironmentFn) {
-        return getEnvironmentFn()
+    return get() || topLevelEnvironment
+
+    function get() {
+        if (getEnvironmentFn) {
+            return getEnvironmentFn()
+        }
     }
 }
 
