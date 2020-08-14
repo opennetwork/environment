@@ -4,6 +4,7 @@
   "version": "1.0.1",
   "description": "Cross platform JavaScript environment",
   "main": "./esnext/index.js",
+  "types": "./esnext/index.d.ts",
   "exports": {
     ".": "./esnext/index.js",
     "./esnext/runtime/run.js": "./esnext/runtime/run.js"
