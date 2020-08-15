@@ -22,9 +22,13 @@ export interface SyncEventTarget<Event = unknown, This = unknown> {
 
 export interface EventTarget<This = unknown> extends SyncEventTarget<Event, This> {
     addEventListener(type: string, callback: EventCallback<Event, This>): void
-    removeEventListener(type: string, callback: EventCallback<Event, This>): void
+    removeEventListener(type: string, callback: Function): void
     dispatchEvent(event: Event): void | Promise<void>
-    hasEventListener(type: string, callback?: EventCallback): Promise<boolean>
+    hasEventListener(type: string, callback?: Function): Promise<boolean>
+}
+
+function isFunctionEventCallback(fn: Function): fn is EventCallback {
+    return typeof fn === "function"
 }
 
 export type AddEventListenerFn = EventTarget["addEventListener"]
@@ -63,7 +67,10 @@ export class EventTarget implements EventTarget {
         }
     }
 
-    removeEventListener(type: string, callback: EventCallback) {
+    removeEventListener(type: string, callback: Function) {
+        if (!isFunctionEventCallback(callback)) {
+            return
+        }
         const index = this.#listeners.findIndex(matchEventCallback(type, callback))
         if (index === -1) {
             return
@@ -211,7 +218,10 @@ export class EventTarget implements EventTarget {
 
     }
 
-    async hasEventListener(type: string, callback?: EventCallback) {
+    async hasEventListener(type: string, callback?: Function) {
+        if (callback && !isFunctionEventCallback(callback)) {
+            return
+        }
         const foundIndex = this.#listeners.findIndex(matchEventCallback(type, callback))
         return foundIndex > -1
     }

@@ -139,7 +139,7 @@ export function addEventListener(type: string, callback: EventCallback<any>): vo
     defaultEventTarget.addEventListener(type, callback)
 }
 
-export function removeEventListener(type: string, callback: EventCallback) {
+export function removeEventListener(type: string, callback: Function) {
     defaultEventTarget.removeEventListener(type, callback)
 }
 
@@ -147,8 +147,8 @@ export async function dispatchEvent<Type extends (keyof EnvironmentEvents & stri
     await defaultEventTarget.dispatchEvent(event)
 }
 
-export async function hasEventListener(type: string) {
-    return defaultEventTarget.hasEventListener(type)
+export async function hasEventListener(type: string, callback?: Function) {
+    return defaultEventTarget.hasEventListener(type, callback)
 }
 
 let getEnvironmentFn: (() => Environment | undefined) | undefined
