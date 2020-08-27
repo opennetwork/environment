@@ -13,29 +13,49 @@ import {
     UpdatingEvent,
     UpdatingEventType
 } from "./events"
+import {StoreKey} from "./key"
 
-export interface Store<Key extends string = string, Value = unknown> extends AsyncIterable<[Key, Value]> {
-    ["__key"]: Key
-    ["__value"]: Value
+export interface SyncStore<Key extends StoreKey = StoreKey, Value = unknown> {
+    get(key: Key): Value | undefined
+    set(key: Key, value: Value): void
+    delete(key: Key): boolean
+    has(key: Key): boolean
+    entries?(): Iterable<[Key, Value]>
+    keys(): Iterable<Key>
+    values?(): Iterable<Value>
+}
+
+export interface AsyncStore<Key extends StoreKey = StoreKey, Value = unknown> {
     get(key: Key): Promise<Value | undefined>
     set(key: Key, value: Value): Promise<void>
     delete(key: Key): Promise<void>
     has(key: Key): Promise<boolean>
-    entries(): AsyncIterable<[Key, Value]>
+    entries?(): AsyncIterable<[Key, Value]>
     keys(): AsyncIterable<Key>
+    values?(): AsyncIterable<Value>
+}
+
+export interface Store<Key extends StoreKey = StoreKey, Value = unknown> extends AsyncStore<Key, Value>, AsyncIterable<[Key, Value]> {
+    ["__key"]: Key
+    ["__value"]: Value
+    entries(): AsyncIterable<[Key, Value]>
     values(): AsyncIterable<Value>
 }
 
-export class Store<Key extends string = string, Value = unknown> extends EventTarget implements Store<Key, Value> {
+export class Store<Key extends StoreKey = StoreKey, Value = unknown> extends EventTarget implements Store<Key, Value> {
 
-    #defaultMap = new Map<Key, Value>()
+    readonly #base: AsyncStore<Key, Value> | SyncStore<Key, Value> | undefined
 
-    constructor() {
+    constructor(base?: AsyncStore<Key, Value> | SyncStore<Key, Value>) {
         super()
+        this.#base = base
     }
 
-    async get(key: Key) {
-        return this.#defaultMap.get(key)
+    async get(key: Key): Promise<Value | undefined> {
+        if (!this.#base) {
+            return undefined
+        }
+        return this.#base.get(key)
     }
 
     async set(key: Key, value: Value) {
@@ -69,7 +89,9 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
             }
             await this.dispatchEvent(event)
         }
-        this.#defaultMap.set(key, value)
+        if (this.#base) {
+            await this.#base.set(key, value)
+        }
         if (hasPreviousValue === false) {
             const event: CreatedEvent<Key, Value> = {
                 type: CreatedEventType,
@@ -106,7 +128,9 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
             previousValue
         }
         await this.dispatchEvent(deletingEvent)
-        this.#defaultMap.delete(key)
+        if (this.#base) {
+            await this.#base.delete(key)
+        }
         const deletedEvent: DeletedEvent<Key, Value> = {
             type: DeletedEventType,
             key,
@@ -115,20 +139,44 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
         await this.dispatchEvent(deletedEvent)
     }
 
-    async has(key: Key) {
-        return this.#defaultMap.has(key)
+    async has(key: Key): Promise<boolean> {
+        if (this.#base) {
+            return this.#base.has(key)
+        }
+        return false
     }
 
-    async *entries() {
-        yield *this.#defaultMap.entries()
+    async *entries(): AsyncIterable<[Key, Value]> {
+        if (this.#base) {
+            if (this.#base.entries) {
+                yield *this.#base.entries()
+            } else {
+                for await (const key of this.keys()) {
+                    const value = await this.get(key)
+                    if (typeof value !== "undefined") {
+                        yield [key, value]
+                    }
+                }
+            }
+        }
     }
 
-    async *keys() {
-        yield *this.#defaultMap.keys()
+    async *keys(): AsyncIterable<Key> {
+        if (this.#base) {
+            yield *this.#base.keys()
+        }
     }
 
-    async *values() {
-        yield *this.#defaultMap.values()
+    async *values(): AsyncIterable<Value> {
+        if (this.#base) {
+            if (this.#base.values) {
+                yield *this.#base.values()
+            } else {
+                for await (const [,value] of this) {
+                    yield value
+                }
+            }
+        }
     }
 
     async *[Symbol.asyncIterator]() {
@@ -136,3 +184,5 @@ export class Store<Key extends string = string, Value = unknown> extends EventTa
     }
 
 }
+
+export type AnyStore<Key extends StoreKey = StoreKey, Value = unknown> = AsyncStore<Key, Value> | SyncStore<Key, Value>

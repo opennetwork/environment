@@ -4,6 +4,8 @@ import {Event} from "../events/events";
 
 export * from "./store/store"
 export * from "./store/events"
+export * from "./s3"
+export * from "./json"
 
 export interface StoreUpdateEvent extends Event<"store:update"> {
     store: Store
