@@ -1,5 +1,7 @@
-import {Store, JSONStore, ValueIsFn} from "../../../storage/storage"
+import {Store, JSONStore, ValueIsFn, S3StoreKey} from "../../../storage/storage"
 import {StoreKey} from "../../../storage/store/key";
+
+export type FSStoreKey = StoreKey
 
 export interface FSStat {
     isFile(): boolean
@@ -17,32 +19,40 @@ export interface FSInterface {
     promises: FSPromiseInterface
 }
 
-export interface FSStoreOptions<Key extends string = string, Value = unknown> {
-    interface?: FSInterface
-    keys?(fs: FSPromiseInterface): AsyncIterable<Key>
+export interface FSStoreOptions<Key extends FSStoreKey = FSStoreKey, Value = unknown, Interface extends FSInterface = FSInterface> {
+    interface?: Interface
+    keys?(fs: Interface["promises"]): AsyncIterable<Key>
     is?: ValueIsFn<Value>
-    noHasOnGet?: boolean
+    noErrorOnBadParse?: boolean
+    reviver?: Parameters<typeof JSON.parse>[1]
+    replacer?: Parameters<typeof JSON.stringify>[1]
+    space?: Parameters<typeof JSON.stringify>[2]
     processHasError?(reason: unknown): boolean
+    processGetError?(reason: unknown): Promise<string | undefined>
 }
 
-function fs<Key extends string = string, Value = unknown>(options: FSStoreOptions<Key, Value>) {
-    let _fs: FSPromiseInterface | undefined = undefined
+function fsStore<Key extends FSStoreKey = FSStoreKey, Value = unknown, Interface extends FSInterface = FSInterface>(options: FSStoreOptions<Key, Value, Interface>) {
+    let _fs: Interface | undefined = undefined
 
     return new JSONStore<Key, Value>({
         base: {
             async get(key: Key) {
-                const fs = await getFS()
-                if (!options.noHasOnGet && !(await this.has(key))) {
-                    return undefined
+                const { promises: fs } = await getFS()
+                try {
+                    return fs.readFile(key, "utf8")
+                } catch (error) {
+                    if (!options.processGetError) {
+                        throw error
+                    }
+                    return options.processGetError(error)
                 }
-                return fs.readFile(key, "utf8")
             },
             async set(key: Key, value: string) {
-                const fs = await getFS()
+                const { promises: fs } = await getFS()
                 await fs.writeFile(key, value, "utf8")
             },
             async delete(key: Key) {
-                const fs = await getFS()
+                const { promises: fs } = await getFS()
                 try {
                     await fs.unlink(key)
                 } catch {
@@ -50,7 +60,7 @@ function fs<Key extends string = string, Value = unknown>(options: FSStoreOption
                 }
             },
             async has(key: Key): Promise<boolean> {
-                const fs = await getFS()
+                const { promises: fs } = await getFS()
                 try {
                     const stat = await fs.stat(key)
                     return stat.isFile()
@@ -63,45 +73,48 @@ function fs<Key extends string = string, Value = unknown>(options: FSStoreOption
             },
             async *keys(): AsyncIterable<Key> {
                 if (options.keys) {
-                    const fs = await getFS()
+                    const { promises: fs } = await getFS()
                     yield* options.keys(fs)
                 }
             }
         },
-        is: options.is
+        is: options.is,
+        noErrorOnBadParse: options.noErrorOnBadParse,
+        reviver: options.reviver,
+        replacer: options.replacer,
+        space: options.space
     })
 
-    async function getFS(): Promise<FSPromiseInterface> {
+    async function getFS(): Promise<Interface> {
         if (_fs) {
             return _fs
         }
 
-        const module = await import("fs")
-
-        if (isFSInterface(module)) {
-            return module.promises
+        if (options.interface) {
+            return options.interface
         }
 
-        throw new Error("Could not utilise fs promises")
+        type FSInterfaceWithPromisesMaybe = { promises?: unknown }
 
-        function isFSInterface(module: unknown): module is FSInterface {
-            function isFSInterfaceLike(module: unknown): module is { promises?: unknown } {
-                return !!module
-            }
-            return (
-                isFSInterfaceLike(module) &&
-                !!module.promises
-            )
+        const module: FSInterfaceWithPromisesMaybe = await import("fs")
+
+        if (isFSInterfaceWithPromises(module)) {
+            return module
+        }
+
+        throw new Error("Could not utilise fs")
+
+        function isFSInterfaceWithPromises(module: FSInterfaceWithPromisesMaybe): module is Interface {
+            return !!module.promises
         }
 
     }
-
 }
 
-export class FSStore<Key extends string = string, Value = unknown> extends Store<string, Value> {
+export class FSStore<Key extends FSStoreKey = FSStoreKey, Value = unknown, Interface extends FSInterface = FSInterface> extends Store<Key, Value> {
 
-    constructor(options: FSStoreOptions<Key, Value>) {
-        super(fs(options))
+    constructor(options: FSStoreOptions<Key, Value, Interface>) {
+        super(fsStore(options))
     }
 
 }

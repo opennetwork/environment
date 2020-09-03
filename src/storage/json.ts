@@ -14,7 +14,7 @@ export interface JSONStoreOptions<Key extends StoreKey = StoreKey, Value = unkno
     space?: Parameters<typeof JSON.stringify>[2]
 }
 
-function json<Key extends StoreKey = StoreKey, Value = unknown>(options: JSONStoreOptions<Key, Value>): AsyncStore<Key, Value> {
+function jsonStore<Key extends StoreKey = StoreKey, Value = unknown>(options: JSONStoreOptions<Key, Value>): AsyncStore<Key, Value> {
     const store = new Store(options.base)
     return {
         async get(key: Key) {
@@ -23,10 +23,10 @@ function json<Key extends StoreKey = StoreKey, Value = unknown>(options: JSONSto
             )
         },
         async set(key: Key, value: Value) {
-            return store.set(key, stringifyValue(value))
+            await store.set(key, stringifyValue(value))
         },
         async delete(key: Key) {
-            return store.delete(key)
+            await store.delete(key)
         },
         async has(key: Key): Promise<boolean> {
             return store.has(key)
@@ -69,7 +69,7 @@ function json<Key extends StoreKey = StoreKey, Value = unknown>(options: JSONSto
 export class JSONStore<Key extends StoreKey = StoreKey, Value = unknown> extends Store<Key, Value> {
 
     constructor(options: JSONStoreOptions<Key, Value>) {
-        super(json(options))
+        super(jsonStore(options))
     }
 
 }

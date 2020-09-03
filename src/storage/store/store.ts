@@ -59,6 +59,13 @@ export class Store<Key extends StoreKey = StoreKey, Value = unknown> extends Eve
     }
 
     async set(key: Key, value: Value) {
+        if (!this.#base) {
+            return undefined
+        }
+        // Setting to undefined or null is same as deletion
+        if (typeof value === "undefined" || value === null) {
+            return this.delete(key)
+        }
         const [isCreatingEvent, isCreatedEvent, isUpdatingEvent, isUpdatedEvent] = await Promise.all([
             this.hasEventListener(CreatingEventType),
             this.hasEventListener(CreatedEventType),
@@ -89,9 +96,7 @@ export class Store<Key extends StoreKey = StoreKey, Value = unknown> extends Eve
             }
             await this.dispatchEvent(event)
         }
-        if (this.#base) {
-            await this.#base.set(key, value)
-        }
+        await this.#base.set(key, value)
         if (hasPreviousValue === false) {
             const event: CreatedEvent<Key, Value> = {
                 type: CreatedEventType,

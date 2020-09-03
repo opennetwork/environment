@@ -1,6 +1,5 @@
-import {AsyncStore, Store} from "./store/store"
-import {JSONStore, ValueIsFn} from "./json";
-import {FSInterface} from "../runtime/node/storage/fs";
+import {Store} from "./store/store"
+import {JSONStore, ValueIsFn} from "./json"
 
 export type S3StoreKey = string | URL
 
@@ -49,7 +48,7 @@ export interface S3StoreOptions<Key extends S3StoreKey = S3StoreKey, Value = unk
     isKey?: ValueIsFn<Key>
 }
 
-function s3<Key extends S3StoreKey = S3StoreKey, Value = unknown>(options: S3StoreOptions<Key, Value>) {
+function s3Store<Key extends S3StoreKey = S3StoreKey, Value = unknown>(options: S3StoreOptions<Key, Value>) {
     return new JSONStore<Key, Value>({
         base: {
             async get(key: Key) {
@@ -141,7 +140,7 @@ function s3<Key extends S3StoreKey = S3StoreKey, Value = unknown>(options: S3Sto
 export class S3Store<Key extends S3StoreKey = S3StoreKey, Value = unknown> extends Store<Key, Value> {
 
     constructor(options: S3StoreOptions<Key, Value>) {
-        super(s3(options))
+        super(s3Store(options))
     }
 
 }
