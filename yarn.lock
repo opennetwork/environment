@@ -17,6 +17,18 @@
   resolved "https://registry.npmjs.org/@opennetwork/http-representation/-/http-representation-3.0.0.tgz#5665ee2a5900dc53cff207aef491144bed0ce32f"
   integrity sha512-g3davRpiR4m9vMhEtocjiENRBgJRnzNd9tWmO2b9E0z9Je5iVmMuzLvTqdP0p+Ew9RIbIEaC+ayEalIkLVgKOQ==
 
+"@opennetwork/rdf-data-model@^5.3.1":
+  version "5.3.1"
+  resolved "https://registry.npmjs.org/@opennetwork/rdf-data-model/-/rdf-data-model-5.3.1.tgz#85a5886ca3d5b8cbefbca086f983cca6f833f89e"
+  integrity sha512-lnjHwYLr7MTkWdjETBzm2BGnqDWVKUDdg2muaQmese9nzw9+UQRMykXII7ppwSVNKTs9NOOFd8yYrZKTon/FcA==
+  dependencies:
+    pure-uuid "^1.6.0"
+
+"@opennetwork/rdf-dataset@^10.1.4":
+  version "10.1.4"
+  resolved "https://registry.npmjs.org/@opennetwork/rdf-dataset/-/rdf-dataset-10.1.4.tgz#9dd6f28661e08b0fd7f55f8a8df4ef7974ff244d"
+  integrity sha512-/XaEJm11tRXqX/QXL084ThPXGUOIWTg93BkvKydFrxp+R+gPDELsMqqbM6KuxnH4f+QnkwFcbnzsdidOQ3R7nQ==
+
 "@opentelemetry/api@^0.7.0":
   version "0.7.0"
   resolved "https://registry.npmjs.org/@opentelemetry/api/-/api-0.7.0.tgz#99be9ae3aa64c0e73077ac7c093ea81303aa609d"
@@ -151,6 +163,11 @@ proper-lockfile@^1.2.0:
     extend "^3.0.0"
     graceful-fs "^4.1.2"
     retry "^0.10.0"
+
+pure-uuid@^1.6.0:
+  version "1.6.1"
+  resolved "https://registry.npmjs.org/pure-uuid/-/pure-uuid-1.6.1.tgz#ec3f9c11b37794551eca9d7a9ce6fb1adc9bc1ed"
+  integrity sha512-0qnd02lO/X6ENcPWyZJf8YwjF3GBou4vAG/k2ecmPSI+qNkTivWw/9MeGiR99Q9DnHfpkTT70hsYUCv297S1xw==
 
 retry@^0.10.0:
   version "0.10.1"

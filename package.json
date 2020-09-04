@@ -36,6 +36,8 @@
     "@edwardmx/noop": "^1.0.1",
     "@opennetwork/http-representation": "^3.0.0",
     "@opennetwork/http-representation-node": "^3.0.0",
+    "@opennetwork/rdf-data-model": "^5.3.1",
+    "@opennetwork/rdf-dataset": "^10.1.4",
     "@opentelemetry/api": "^0.7.0",
     "abort-controller": "^3.0.0",
     "dependency-graph": "^0.9.0",
