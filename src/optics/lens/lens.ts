@@ -1,13 +1,10 @@
-import {unlink} from "fs";
-
 export interface LensRay<T> {
-    sequence: number
     value: T
 }
 
-export interface LensChange<T> {
-    additions: Iterable<LensRay<T>>
-    deletions: Iterable<LensRay<T>>
+export interface LensChange<T, R extends LensRay<T> = LensRay<T>> {
+    additions: Iterable<R>
+    deletions: Iterable<R>
 }
 
 function isOpenable(value: unknown): value is { open: boolean } {
