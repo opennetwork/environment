@@ -2,7 +2,7 @@ import { StoreKey } from "./key";
 import { Store } from "./store";
 
 export interface StoreRouterFunction<Key extends StoreKey = StoreKey, Value = unknown> {
-    (key: Key): Promise<Store<Key, Value>>;
+    (key: Key): Promise<Store<Key, Value> | undefined> | Store<Key, Value> | undefined;
 }
 
 export interface StoreRouter<Key extends StoreKey = StoreKey, Value = unknown> {

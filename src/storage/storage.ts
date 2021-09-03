@@ -20,34 +20,3 @@ declare global {
     }
 
 }
-
-
-const stores = new WeakMap<Environment, Store>()
-
-export function getStore(): Store {
-    const environment = getEnvironment()
-    if (!environment) {
-        throw new Error("Environment required to use Store")
-    }
-    let store = stores.get(environment)
-    if (!store) {
-        store = new Store()
-        stores.set(environment, store)
-    }
-    return store
-}
-
-export async function setStore(store: Store) {
-    const environment = getEnvironment()
-    if (!environment) {
-        throw new Error("Environment required to use Store")
-    }
-    if (stores.get(environment) === store) {
-        return
-    }
-    stores.set(environment, store)
-    await dispatchEvent({
-        type: "store:update",
-        store
-    })
-}
