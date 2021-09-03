@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@opennetwork/environment",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Cross platform JavaScript environment",
   "main": "./esnext/index.js",
   "types": "./esnext/index.d.ts",
