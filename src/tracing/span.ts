@@ -45,12 +45,19 @@ export function trace(name: string, keyValuePairs: Attributes = {}, timestamp?: 
     }
 }
 
-export function error(error: Error, timestamp?: number, span: Span | undefined = getSpan()) {
+export function error(error: unknown, timestamp?: number, span: Span | undefined = getSpan()) {
     if (span) {
-        span.addEvent("error", {
-            "error.object": error,
-            "message": error.message,
-            "stack": error.stack
-        }, timestamp)
+        if (error instanceof Error) {
+            span.addEvent("error", {
+                "error.object": error,
+                "message": error.message,
+                "stack": error.stack
+            }, timestamp)
+        } else {
+            span.addEvent("error", {
+                "error.object": error,
+                "message": String(error)
+            }, timestamp)
+        }
     }
 }

@@ -86,7 +86,7 @@ export async function start(): Promise<void> {
 
     const server = createServer(onRequestResponsePair)
 
-    await new Promise(
+    await new Promise<void>(
         (resolve, reject) => {
             server.once("error", reject)
             server.listen(port, () => {

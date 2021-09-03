@@ -14,7 +14,7 @@ export interface CompleteEvent extends Event<"complete"> {
 }
 
 export interface ErrorEvent extends Event<"error"> {
-    error: Error
+    error: unknown
 }
 
 declare global {

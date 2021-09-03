@@ -36,19 +36,21 @@ async function *iterateStores<S, V>(input: AsyncIterable<S>, map: (value: S) => 
 
 export class RoutedStore<Key extends StoreKey = StoreKey, Value = unknown> extends Store<Key, Value> implements RoutedStore<Key, Value> {
 
-    readonly #getStore: StoreRouterFunction<Key, Value>;
-    readonly #getStores: GetStoresFunction<Key, Value> | Iterable<Store<Key, Value>> | undefined;
+    readonly #getStore?: StoreRouterFunction<Key, Value>;
+    readonly #getStores?: GetStoresFunction<Key, Value> | Iterable<Store<Key, Value>>;
 
-    constructor(router: StoreRouter<Key, Value> | StoreRouterFunction<Key, Value>) {
+    constructor(router?: StoreRouter<Key, Value> | StoreRouterFunction<Key, Value>) {
         super();
-        this.#getStore = typeof router === "function" ? router : router.getStore.bind(router);
+        this.#getStore = typeof router === "function" ? router : router?.getStore.bind(router);
         this.#getStores = typeof router === "function" ?
-            undefined : typeof router.getStores === "function"
-                ? router.getStores?.bind(router) : router.getStores;
+            undefined : typeof router?.getStores === "function"
+                ? router.getStores?.bind(router) : router?.getStores;
     }
 
     async getStore(key: Key) {
-        return this.#getStore(key);
+        if (this.#getStore) {
+            return this.#getStore(key);
+        }
     }
 
     async * getStores() {
