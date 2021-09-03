@@ -12,13 +12,22 @@ export interface TypedStore<S extends Store> extends Store<S["__key"], S["__valu
 export function getTypedStore<S extends Store>(isKey: IsTypedStoreKeyFn<S>): TypedStore<S> {
     const globalStore: unknown = getStore();
     return new RoutedStore(
-        (key: unknown) => {
-            if (!isKeyValidForStore(globalStore, key)) {
-                return undefined;
+        {
+            getStore(key: unknown) {
+                if (!isKeyValidForStore(globalStore, key)) {
+                    return undefined;
+                }
+                return globalStore;
+            },
+            async * getStores() {
+                brandGlobalStoreAsTyped(globalStore);
+                yield globalStore;
             }
-            return globalStore;
         }
     );
+    function brandGlobalStoreAsTyped(store: unknown): asserts store is TypedStore<S> {
+
+    }
     function isKeyValidForStore(store: unknown, key: unknown): store is TypedStore<S> {
         return isKey(key) && store === globalStore;
     }
