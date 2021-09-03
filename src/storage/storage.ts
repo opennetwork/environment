@@ -3,9 +3,11 @@ import {getEnvironment, Environment, dispatchEvent} from "../environment/environ
 import {Event} from "../events/events";
 
 export * from "./store/store"
+export * from "./store/routed"
 export * from "./store/events"
 export * from "./s3"
 export * from "./json"
+export * from "./fetch"
 
 export interface StoreUpdateEvent extends Event<"store:update"> {
     store: Store

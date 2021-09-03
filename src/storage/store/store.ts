@@ -46,7 +46,7 @@ export class Store<Key extends StoreKey = StoreKey, Value = unknown> extends Eve
 
     readonly #base: AsyncStore<Key, Value> | SyncStore<Key, Value> | undefined
 
-    constructor(base?: AsyncStore<Key, Value> | SyncStore<Key, Value>) {
+    constructor(base?: AsyncStore<Key, Value> | SyncStore<Key, Value> | Map<Key, Value>) {
         super()
         this.#base = base
     }
