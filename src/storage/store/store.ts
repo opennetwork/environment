@@ -202,7 +202,7 @@ export function getStore(): Store {
     }
     let store = stores.get(environment)
     if (!store) {
-        store = new Store()
+        store = new Store(new Map())
         stores.set(environment, store)
     }
     return store
