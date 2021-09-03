@@ -84,15 +84,27 @@ export class RoutedStore<Key extends StoreKey = StoreKey, Value = unknown> exten
     }
 
     async * entries(): AsyncIterable<[Key, Value]> {
-        yield * iterateStores(this.getStores(), store => store.entries());
+        const getStore = (key: Key) => this.getStore(key);
+        yield * iterateStores(this.getStores(), async function *(store): AsyncIterable<[Key, Value]> {
+            for await (const [key, value] of store.entries()) {
+                const targetStore = await getStore(key);
+                if (targetStore === store) {
+                    yield [key, value];
+                }
+            }
+        });
     }
 
     async * keys(): AsyncIterable<Key> {
-        yield * iterateStores(this.getStores(), store => store.keys());
+        for await (const [key] of this.entries()) {
+            yield key;
+        }
     }
 
     async * values(): AsyncIterable<Value> {
-        yield * iterateStores(this.getStores(), store => store.values());
+        for await (const [, value] of this.entries()) {
+            yield value;
+        }
     }
 
 
