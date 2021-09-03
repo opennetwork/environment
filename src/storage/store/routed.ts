@@ -1,30 +1,62 @@
 import { StoreKey } from "./key";
 import { Store } from "./store";
+import { union } from "@virtualstate/union";
+import { asyncExtendedIterable } from "iterable"
 
 export interface StoreRouterFunction<Key extends StoreKey = StoreKey, Value = unknown> {
     (key: Key): Promise<Store<Key, Value> | undefined> | Store<Key, Value> | undefined;
 }
 
+export interface GetStoresFunction<Key extends StoreKey = StoreKey, Value = unknown> {
+    (): AsyncIterable<Store<Key, Value>> | Iterable<Store<Key, Value>>
+}
+
 export interface StoreRouter<Key extends StoreKey = StoreKey, Value = unknown> {
     getStore: StoreRouterFunction<Key, Value>;
-    // stores?: AsyncIterable<Store<Key, Value>>;
+    getStores?: GetStoresFunction<Key, Value> | Iterable<Store<Key, Value>>;
 }
 
 export interface RoutedStore<Key extends StoreKey = StoreKey, Value = unknown> extends Store<Key, Value>, StoreRouter<Key, Value> {
+    getStores(): AsyncIterable<Store<Key, Value>>;
+}
 
+async function *iterateStores<S, V>(input: AsyncIterable<S>, map: (value: S) => AsyncIterable<V>): AsyncIterable<V> {
+    let seen = new Set<V>();
+    for await (const nextSet of union(asyncExtendedIterable(input).map(map))) {
+        let notSeenCount = 0;
+        for (const value of nextSet) {
+            if (typeof value === "undefined") continue;
+            if (seen.has(value)) continue;
+            notSeenCount += 1;
+            yield value;
+            seen.add(value);
+        }
+    }
 }
 
 export class RoutedStore<Key extends StoreKey = StoreKey, Value = unknown> extends Store<Key, Value> implements RoutedStore<Key, Value> {
 
     readonly #getStore: StoreRouterFunction<Key, Value>;
+    readonly #getStores: GetStoresFunction<Key, Value> | Iterable<Store<Key, Value>> | undefined;
 
     constructor(router: StoreRouter<Key, Value> | StoreRouterFunction<Key, Value>) {
         super();
         this.#getStore = typeof router === "function" ? router : router.getStore.bind(router);
+        this.#getStores = typeof router === "function" ?
+            undefined : typeof router.getStores === "function"
+                ? router.getStores?.bind(router) : router.getStores;
     }
 
     async getStore(key: Key) {
         return this.#getStore(key);
+    }
+
+    async * getStores() {
+        if (typeof this.#getStores === "function") {
+            yield * this.#getStores();
+        } else if (this.#getStores) {
+            yield * this.#getStores;
+        }
     }
 
     async get(key: Key): Promise<Value | undefined> {
@@ -52,15 +84,15 @@ export class RoutedStore<Key extends StoreKey = StoreKey, Value = unknown> exten
     }
 
     async * entries(): AsyncIterable<[Key, Value]> {
-
+        yield * iterateStores(this.getStores(), store => store.entries());
     }
 
     async * keys(): AsyncIterable<Key> {
-
+        yield * iterateStores(this.getStores(), store => store.keys());
     }
 
     async * values(): AsyncIterable<Value> {
-
+        yield * iterateStores(this.getStores(), store => store.values());
     }
 
 

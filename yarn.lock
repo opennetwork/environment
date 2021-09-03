@@ -46,6 +46,11 @@
   resolved "https://registry.npmjs.org/@types/node/-/node-13.13.5.tgz#96ec3b0afafd64a4ccea9107b75bf8489f0e5765"
   integrity sha512-3ySmiBYJPqgjiHA7oEaIo2Rzz0HrOZ7yrNO5HWyaE5q0lQ3BppDZ3N53Miz8bw2I7gh1/zir2MGVZBvpb1zq9g==
 
+"@virtualstate/union@^2.22.1":
+  version "2.22.1"
+  resolved "https://registry.npmjs.org/@virtualstate/union/-/union-2.22.1.tgz#d504bd31627c722001e3abfc63fb180b5167fded"
+  integrity sha512-DVpi97mGBKKUmm9w0CvrBQICVATCbyvBoJ9Lhq56E8IDHoAsYWyfat6LSjwQlOyW2ZJNaHIwwguosiHHdIn/ig==
+
 abort-controller@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/abort-controller/-/abort-controller-3.0.0.tgz#eaf54d53b62bae4138e809ca225c8439a6efb392"
@@ -131,6 +136,11 @@ graceful-fs@^4.1.2:
   version "4.2.4"
   resolved "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.4.tgz#2256bde14d3632958c465ebc96dc467ca07a29fb"
   integrity sha512-WjKPNJF79dtJAVniUlGGWHYGz2jWxT6VhN/4m1NdkbZ2nOsEF+cI1Edgql5zCRhs/VsQYRvrXctxktVXZUkixw==
+
+iterable@^5.7.0:
+  version "5.7.0"
+  resolved "https://registry.npmjs.org/iterable/-/iterable-5.7.0.tgz#6937296d3380c227f55fd5ca299e41a821d573f7"
+  integrity sha512-xLERMG+ha4eAxSkms2iaJbjFW5V2uB8vFZVq6Kh+YwPax29IwMTdOIOoieeXOu6+nV0+xe82i2H346RLvsyigA==
 
 lit-html@^1.2.1:
   version "1.2.1"
