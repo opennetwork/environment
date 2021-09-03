@@ -5,6 +5,7 @@ import {Event} from "../events/events";
 export * from "./store/store"
 export * from "./store/routed"
 export * from "./store/events"
+export * from "./store/typed"
 export * from "./s3"
 export * from "./json"
 export * from "./fetch"
