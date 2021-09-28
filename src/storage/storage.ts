@@ -11,6 +11,7 @@ export * from "./s3"
 export * from "./json"
 export * from "./fetch"
 export * from "./fs";
+export * from "./browser";
 
 export interface StoreUpdateEvent extends Event<"store:update"> {
     store: Store
