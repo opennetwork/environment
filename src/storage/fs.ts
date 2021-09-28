@@ -10,10 +10,10 @@ export interface FSStat {
 }
 
 export interface FSPromiseInterface {
-    stat(key: StoreKey): Promise<FSStat>
-    unlink(key: StoreKey): Promise<FSStat>
-    writeFile(key: StoreKey, value: string, encoding: "utf8"): Promise<void>
-    readFile(key: StoreKey, encoding: "utf8"): Promise<string>
+    stat(key: string): Promise<FSStat>
+    unlink(key: string): Promise<unknown>
+    writeFile(key: string, value: string, encoding: "utf8"): Promise<void>
+    readFile(key: string, encoding: "utf8"): Promise<string>
 }
 
 export interface FSInterface {
@@ -39,8 +39,9 @@ function fsStore<Key extends FSStoreKey = FSStoreKey, Value = unknown, Interface
         base: {
             async get(key: Key) {
                 const { promises: fs } = await getFS()
+                const stringKey = key.toString();
                 try {
-                    return fs.readFile(key, "utf8")
+                    return fs.readFile(stringKey, "utf8")
                 } catch (error) {
                     if (!options.processGetError) {
                         throw error
@@ -50,12 +51,14 @@ function fsStore<Key extends FSStoreKey = FSStoreKey, Value = unknown, Interface
             },
             async set(key: Key, value: string) {
                 const { promises: fs } = await getFS()
-                await fs.writeFile(key, value, "utf8")
+                const stringKey = key.toString();
+                await fs.writeFile(stringKey, value, "utf8")
             },
             async delete(key: Key) {
                 const { promises: fs } = await getFS()
                 try {
-                    await fs.unlink(key)
+                    const stringKey = key.toString();
+                    await fs.unlink(stringKey)
                 } catch {
 
                 }
@@ -63,7 +66,8 @@ function fsStore<Key extends FSStoreKey = FSStoreKey, Value = unknown, Interface
             async has(key: Key): Promise<boolean> {
                 const { promises: fs } = await getFS()
                 try {
-                    const stat = await fs.stat(key)
+                    const stringKey = key.toString();
+                    const stat = await fs.stat(stringKey)
                     return stat.isFile()
                 } catch(error) {
                     if (!options.processHasError) {
