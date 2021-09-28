@@ -1,2 +1,1 @@
-// export * from "../../../storage/fs";
-export { };
+export * from "../../../storage/fs";

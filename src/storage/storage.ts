@@ -10,6 +10,7 @@ export * from "./store/entries";
 export * from "./s3"
 export * from "./json"
 export * from "./fetch"
+export * from "./fs";
 
 export interface StoreUpdateEvent extends Event<"store:update"> {
     store: Store
