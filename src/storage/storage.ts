@@ -1,5 +1,4 @@
-import {Store} from "./store/store"
-import {getEnvironment, Environment, dispatchEvent} from "../environment/environment"
+import {Store} from "./store/store";
 import {Event} from "../events/events";
 
 export * from "./store/store"
