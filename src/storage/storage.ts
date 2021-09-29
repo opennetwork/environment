@@ -7,6 +7,11 @@ export * from "./store/routed"
 export * from "./store/events"
 export * from "./store/typed"
 export * from "./store/entries";
+export * from "./store/typed-context";
+export {
+    StorageKeyPrefix,
+    StorageKeyPrefixUnknown
+} from "./store/prefixed-key";
 export * from "./s3"
 export * from "./json"
 export * from "./fetch"
