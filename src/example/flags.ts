@@ -38,6 +38,11 @@ addEventListener("configure", async function configure(event) {
     FLAG_removed: hasFlag("FLAG")
   });
 
+  setFlag("FLAG")
+  console.log({
+    FLAG_set: hasFlag("FLAG")
+  });
+
   const context = getEnvironmentContext()
   if (context) {
     context["identity"] = {
