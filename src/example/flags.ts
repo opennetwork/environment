@@ -17,6 +17,7 @@ addEventListener("configure", async function configure(event) {
 
   addEventListener("child event", () => {
     console.log({
+      // flags are available in children events
       FLAG_child: hasFlag("FLAG")
     })
   })
@@ -25,16 +26,19 @@ addEventListener("configure", async function configure(event) {
 
   resetFlag("FLAG")
   console.log({
+    // Resetting a flag hides it from the environment, whether it is set or removed
     FLAG_reset: hasFlag("FLAG")
   })
 
   createFlag("FLAG")
   console.log({
+    // Resetting + Creating does not remove flag states
     FLAG_created: hasFlag("FLAG")
   })
 
   removeFlag("FLAG");
   console.log({
+    // Removing a flag specifically is turning it off
     FLAG_removed: hasFlag("FLAG")
   });
 
