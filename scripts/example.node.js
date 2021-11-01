@@ -1,8 +1,10 @@
-import promise from "./collector-example.js"
+import promise from "./example.js"
 
 promise
   .then(result => {
-    console.log({ result })
+    if (result) {
+      console.log({ result })
+    }
     console.log("complete. bye")
     process.exit(0)
   })

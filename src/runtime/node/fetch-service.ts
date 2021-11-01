@@ -14,6 +14,8 @@ import { defer } from "../../deferred"
 import { isSignalHandled, Event } from "../../events/events"
 import { hasFlag } from "../../flags/flags"
 import { getEnvironmentConfig, setEnvironmentConfig } from "../../config/config"
+import {dispatchFetchEvent} from "../../fetch/fetch";
+import * as http from "http";
 
 export interface FetchEvent extends Event<"fetch"> {
     request: Request
@@ -126,56 +128,16 @@ export async function start(): Promise<void> {
             const environment = await getRuntimeEnvironment()
             const controller = new AbortController()
             environment.addAbortController(controller)
-
-            const { resolve: respondWith, reject: respondWithError, promise: responded } = defer<Response>()
-            const event: FetchEvent = {
-                type: "fetch",
+            request.on("abort", () => controller.abort());
+            request.on("close", () => controller.abort());
+            const [event, responsePromise] = await dispatchFetchEvent({
                 request: httpRequest,
-                respondWith(httpResponse: Response | Promise<Response>): void {
-                    environment.addService(
-                        Promise.resolve(httpResponse)
-                            .then(respondWith)
-                            .catch(error => {
-                                if (isSignalHandled(event, error)) {
-                                    return
-                                }
-                                respondWithError(error)
-                            })
-                    )
-                },
-                async waitUntil(promise: Promise<unknown>): Promise<void> {
-                    environment.addService(promise)
-                    await promise
-                },
-                parallel: false,
-                signal: controller.signal
-            }
-            let timeout: unknown
+                abortTimeout,
+                signal: controller.signal,
+                type: "fetch"
+            });
             try {
-                request.on("aborted", () => abort("request_aborted"))
-                // We will abort on close to indicate to handlers that we can no longer accept a response
-                request.on("close", () => abort("request_closed"))
-                environment.addService(
-                    responded.then(
-                        () => abort("responded"),
-                        () => abort("responded_with_error")
-                    )
-                )
-                if (abortTimeout) {
-                    timeout = setTimeout(() => {
-                        abort("timed_out")
-                        respondWith(new Response("", {
-                            status: 408
-                        }))
-                    }, typeof abortTimeout === "number" ? abortTimeout : 30000)
-                }
-                await environment.runInAsyncScope(async () => {
-                    await dispatchEvent(event)
-                })
-                const httpResponse = await responded
-                if (typeof timeout === "number") {
-                    clearTimeout(timeout)
-                }
+                const httpResponse = await responsePromise;
                 trace("response", {
                     "http.status": httpResponse.status
                 })
@@ -183,15 +145,13 @@ export async function start(): Promise<void> {
                 trace("request_end")
             } finally {
                 abort("finally")
-                environment.addService(responded)
                 // Ensure the promise is completed if it is still in play
-                respondWithError(new Error("Response no longer required"))
+                event.respondWith(
+                    Promise.reject(new Error("Response no longer required"))
+                );
             }
 
             function abort(reason?: string) {
-                if (typeof timeout === "number") {
-                    clearTimeout(timeout)
-                }
                 if (controller.signal.aborted) {
                     // Already aborted, no need to do it again!
                     return
