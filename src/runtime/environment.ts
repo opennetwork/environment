@@ -1,9 +1,10 @@
 import {Environment, setEnvironment, getEnvironment} from "../environment/environment"
-import {isRunningCloudflare} from "./cloudflare/is-running"
-import {isRunningNode} from "./node/is-running"
-import {isRunningAWSLambda} from "./aws-lambda/is-running"
-import {isRunningBrowser} from "./browser/is-running"
-import {isRunningReactNative} from "./react-native/is-running"
+import {isRunning as isRunningCloudflare} from "./cloudflare/is-running"
+import {isRunning as isRunningNode} from "./node/is-running"
+import {isRunning as isRunningAWSLambda} from "./aws-lambda/is-running"
+import {isRunning as isRunningBrowser} from "./browser/is-running"
+import {isRunning as isRunningReactNative} from "./react-native/is-running"
+import {isRunning as isRunningDenoDeploy} from "./deno-deploy/is-running"
 
 export interface EnvironmentRuntimeDetail {
     getEnvironment?(): Environment | undefined
@@ -13,6 +14,12 @@ export interface EnvironmentRuntimeDetail {
 async function getRuntimeEnvironmentDetail(): Promise<EnvironmentRuntimeDetail> {
     if (isRunningCloudflare()) {
         const { Environment } = await import("./cloudflare/cloudflare")
+        return {
+            getEnvironment: Environment.getEnvironment,
+            environment: new Environment()
+        }
+    } else if (isRunningDenoDeploy()) {
+        const { Environment } = await import("./deno-deploy/deno-deploy")
         return {
             getEnvironment: Environment.getEnvironment,
             environment: new Environment()

@@ -1,3 +1,3 @@
-export function isRunningBrowser() {
+export function isRunning() {
     return typeof window !== "undefined"
 }

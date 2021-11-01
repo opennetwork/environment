@@ -1,5 +1,5 @@
-import { isRunningNode } from "../node/is-running"
+import { isRunning as isRunningNode } from "../node/is-running"
 
-export function isRunningAWSLambda() {
+export function isRunning() {
     return isRunningNode() && process.env.LAMBDA_ENV === "true"
 }
