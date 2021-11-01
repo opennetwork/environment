@@ -10,17 +10,18 @@ function notFound() {
 }
 
 async function getResponseForGET({ url }: Request): Promise<Response> {
-    if (url.startsWith("/ping")) {
+    const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
+    if (pathname === "/ping") {
         return new Response("Pong", {
             status: 200
         });
     }
-    if (url.startsWith("/pong")) {
+    if (pathname === "/pong") {
         return new Response("Ping", {
             status: 200
         });
     }
-    if (url.startsWith("/hello")) {
+    if (pathname === "/hello") {
         return new Response("World", {
             status: 200
         });

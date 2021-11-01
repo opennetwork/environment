@@ -5,11 +5,12 @@ import AbortController from "abort-controller";
 import {defer} from "../deferred";
 import {isSignalHandled} from "../events/target/target";
 import {trace} from "../tracing/span";
+import {globalFetch} from "./global";
 
 export async function fetch(url: string, init?: RequestInit): Promise<AnyResponse | Response> {
     if (!(await hasEventListener("fetch"))) {
-        if (typeof window !== "undefined" && window.fetch) {
-            return window.fetch(url, init);
+        if (globalFetch) {
+            return globalFetch(url, init);
         }
         throw new Error("Not Implemented");
     }

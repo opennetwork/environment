@@ -1,21 +1,3 @@
-import {
-  addEventListener,
-  dispatchEvent,
-  getEnvironmentContext,
-  getEventContext,
-  getTracer,
-  createFlag,
-  setFlag,
-  hasFlag,
-  resetFlag,
-  removeFlag,
-  isSignalEvent,
-  isRespondEvent,
-  Store,
-  RoutedStore
-} from "../esnext/index.js"
-import { Response } from "@opennetwork/http-representation"
-import AbortController from "abort-controller";
 import "../esnext/example/index.js";
 //
 // // addEventListener("*", function (event) {
@@ -240,5 +222,7 @@ import "../esnext/example/index.js";
 //   }
 // }
 
-export default import("../esnext/runtime/run.js")
-  .then(({ default: promise }) => promise)
+export default {
+  promise: import("../esnext/runtime/run.js")
+    .then(({ default: promise }) => promise)
+}

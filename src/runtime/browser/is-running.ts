@@ -1,3 +1,3 @@
 export function isRunning() {
-    return typeof window !== "undefined"
+    return typeof localStorage !== "undefined"
 }

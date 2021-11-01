@@ -13,6 +13,8 @@ export async function run(config: EnvironmentConfig) {
 
             await runWithSpan("environment", { attributes: { name: environment.name } }, async () => {
 
+                console.log({ environment });
+
                 await runWithSpan("environment_configure", {}, () => {
                     if (environment.configure) {
                         environment.configure()
@@ -26,6 +28,7 @@ export async function run(config: EnvironmentConfig) {
                 })
 
                 await runWithSpan("environment_post_configure", {}, () => {
+                    console.log("environment_post_configure", environment.postConfigure);
                     if (environment.postConfigure) {
                         environment.postConfigure()
                     }

@@ -1,5 +1,7 @@
-const that = globalThis ?? this;
+declare global {
+    const HTMLRewriter: unknown;
+}
 
 export function isRunning() {
-    return "addEventListener" in that && "crypto" in that && "caches" in that && "HTMLRewriter" in that && "Headers" in that && "Response" in that && "Request" in that;
+    return typeof addEventListener !== "undefined"  && typeof caches !== "undefined" && typeof HTMLRewriter !== "undefined";
 }

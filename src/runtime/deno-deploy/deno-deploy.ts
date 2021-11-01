@@ -1,4 +1,5 @@
 import { Environment as EnvironmentTemplate } from "../../environment/environment"
+import { start as startFetchService } from "./fetch-service";
 
 let instance: Environment | undefined = undefined
 let instances = 0
@@ -18,6 +19,10 @@ export class Environment extends EnvironmentTemplate {
             console.log("Multiple environments created for this deno-deploy process")
         }
         return instance
+    }
+
+    async postConfigure() {
+        this.addService(startFetchService())
     }
 
 }
