@@ -6,3 +6,6 @@ import {addEventListener} from "../environment/environment";
 addEventListener("complete", () => {
     console.log("Everything else executed");
 });
+
+const { default: promise } = await import("../runtime/run.js");
+await promise;

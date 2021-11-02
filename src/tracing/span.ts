@@ -1,6 +1,6 @@
 import { getTracer } from "./tracer"
 import { createLocalStorage } from "../local-storage"
-import { Span, SpanOptions, Attributes } from "@opentelemetry/api"
+import { Span, SpanOptions, SpanAttributes } from "@opentelemetry/api"
 import { getEnvironment } from "../environment/environment";
 
 const localStorage = createLocalStorage<Span>()
@@ -16,10 +16,17 @@ export async function runWithSpanOptional(name: string, options: SpanOptions, ca
 export async function runWithSpan(name: string, options: SpanOptions, callback: () => void | Promise<void>) {
     const tracer = getTracer()
     const parent = getSpan()
-    if (parent && !options.parent) {
+    if (parent && !options.links) {
         options = {
             ...options,
-            parent
+            links: [
+                {
+                    attributes: {
+                      is: "parent"
+                    },
+                    context: parent.spanContext(),
+                }
+            ]
         }
     }
     const span = tracer.startSpan(name, options)
@@ -39,23 +46,24 @@ export function getSpan() {
     return localStorage.getStore()
 }
 
-export function trace(name: string, keyValuePairs: Attributes = {}, timestamp?: number, span: Span | undefined = getSpan()) {
+export function trace(name: string, keyValuePairs: SpanAttributes = {}, timestamp?: number, span: Span | undefined = getSpan()) {
     if (span) {
         span.addEvent(name, keyValuePairs, timestamp)
     }
 }
 
 export function error(error: unknown, timestamp?: number, span: Span | undefined = getSpan()) {
+    console.error(error);
     if (span) {
         if (error instanceof Error) {
             span.addEvent("error", {
-                "error.object": error,
+                "error.object": JSON.stringify(error),
                 "message": error.message,
                 "stack": error.stack
             }, timestamp)
         } else {
             span.addEvent("error", {
-                "error.object": error,
+                "error.object": JSON.stringify(error),
                 "message": String(error)
             }, timestamp)
         }

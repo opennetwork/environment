@@ -81,7 +81,7 @@ export class EventTarget implements EventTarget {
     async dispatchEvent(event: Event) {
         const listeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
 
-        await runWithSpanOptional(`event_dispatch`, { attributes: { event, listeners } }, async () => {
+        await runWithSpanOptional(`event_dispatch`, { attributes: { type: event.type, listeners: listeners.length } }, async () => {
             // Don't even dispatch an aborted event
             if (isSignalEvent(event) && event.signal.aborted) {
                 return
@@ -136,7 +136,7 @@ export class EventTarget implements EventTarget {
                         })
                     }
 
-                    const promise = runWithSpanOptional("event_dispatched", { attributes: { event, listener: index } }, async () => {
+                    const promise = runWithSpanOptional("event_dispatched", { attributes: { type: event.type, listener: index } }, async () => {
                         if (environment) {
                             await environment.runInAsyncScope(async () => {
                                 await descriptor.callback.call(this.#thisValue, event)
@@ -157,7 +157,7 @@ export class EventTarget implements EventTarget {
                                         error
                                     })
                                 } else {
-                                    trace("unhandled_errors", { unhandled: [ { state: "rejected", reason: error } ] })
+                                    trace("unhandled_errors", { unhandled: JSON.stringify([{ state: "rejected", reason: error }]) })
                                     throw error
                                 }
                             }
@@ -207,7 +207,7 @@ export class EventTarget implements EventTarget {
                                     errors: unhandled.map(({ reason }) => reason)
                                 })
                             } else {
-                                trace("unhandled_errors", { unhandled })
+                                trace("unhandled_errors", { unhandled: JSON.stringify(unhandled) })
                                 throw unhandled[0].reason
                             }
                         }

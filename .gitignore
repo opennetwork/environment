@@ -1,3 +1,4 @@
 esnext
 node_modules
 .idea
+wrangler.toml

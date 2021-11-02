@@ -11,6 +11,12 @@ function notFound() {
 
 async function getResponseForGET({ url }: Request): Promise<Response> {
     const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
+    console.log({ pathname });
+    if (pathname === "/data") {
+        return new Response(JSON.stringify({
+            data: "value!"
+        }), { status: 200 });
+    }
     if (pathname === "/ping") {
         return new Response("Pong", {
             status: 200
@@ -32,6 +38,12 @@ async function getResponseForGET({ url }: Request): Promise<Response> {
 addEventListener("fetch", async ({ respondWith, request }) => {
     if (request.method === "GET") {
         return respondWith(getResponseForGET(request))
+    } else if (request.method === "PUT") {
+        const { pathname } = new URL(request.url, 'http://localhost');
+        if (pathname === '/data') {
+            console.log({ requestBody: await request.json() });
+            return respondWith(getResponseForGET(request));
+        }
     } else {
         respondWith(notFound());
     }
@@ -76,4 +88,23 @@ addEventListener("execute", async () => {
     });
     const example = await response.text();
     console.log({ example });
+})
+
+addEventListener("execute", async () => {
+    const response = await fetch("/data", {
+        method: "GET"
+    });
+    const { data } = await response.json();
+    console.log({ data });
+})
+
+addEventListener("execute", async () => {
+    const response = await fetch("/data", {
+        method: "PUT",
+        body: JSON.stringify({
+            data: "input!"
+        })
+    });
+    const { data } = await response.json();
+    console.log({ data });
 })

@@ -26,7 +26,7 @@ export async function fetch(url: string, init?: RequestInit): Promise<AnyRespons
             type = "internal-fetch";
         }
     }
-    const request = new Request(url, init);
+    const request = new Request(new URL(url, 'internal://localhost').toString(), init);
     const [, response] = await dispatchFetchEvent({
       request,
       type

@@ -16,6 +16,7 @@ import { hasFlag } from "../../flags/flags"
 import { getEnvironmentConfig, setEnvironmentConfig } from "../../config/config"
 import {dispatchFetchEvent} from "../../fetch/fetch";
 import * as http from "http";
+import {BoundCounter, ConsoleMetricExporter, MeterProvider, MetricExporter} from "@opentelemetry/metrics";
 
 export interface FetchEvent extends Event<"fetch"> {
     request: Request
@@ -36,6 +37,9 @@ export interface FetchServiceConfig {
     onListener?: boolean
     baseUrl?: string
     timeout?: number | boolean
+    meter?: string
+    meterProvider?: MeterProvider
+    meterExporter?: MetricExporter
 }
 
 addEventListener("configure", async () => {
@@ -63,7 +67,8 @@ addEventListener("configure", async () => {
             port,
             baseUrl,
             onListener: hasFlag("FETCH_SERVICE_ON_LISTENER"),
-            timeout: hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT")
+            timeout: hasFlag("FETCH_SERVICE_ABORT_ON_TIMEOUT"),
+            // meter: 'external -> internal fetch'
         }
     })
 })
@@ -75,7 +80,7 @@ export async function start(): Promise<void> {
         return
     }
 
-    const { port, onListener, timeout: abortTimeout, baseUrl } = config.fetchService
+    const { port, onListener, timeout: abortTimeout, baseUrl, meter: meterName, meterExporter, meterProvider } = config.fetchService
 
     if (onListener) {
         const hasListeners = await hasEventListener("fetch")
@@ -85,6 +90,20 @@ export async function start(): Promise<void> {
             return
         }
     }
+
+    const meter = meterName ? (
+        meterProvider ??
+        new MeterProvider({
+            exporter: meterExporter ?? new ConsoleMetricExporter(),
+            interval: 1000
+        })
+    ).getMeter(meterName) : undefined;
+
+    const requestCount = meter?.createCounter("requests", {
+        description: "Count all incoming requests"
+    });
+
+    const boundInstruments = requestCount ? new Map() : undefined;
 
     const server = createServer(onRequestResponsePair)
 
@@ -124,7 +143,23 @@ export async function start(): Promise<void> {
             response.end()
         })
 
+        function getBoundCounter(url: string): ReturnType<NonNullable<typeof requestCount>["bind"]> | undefined {
+            if (!boundInstruments || !requestCount) return undefined;
+            const { pathname, host, protocol } = new URL(url);
+            const key = `${protocol}://${host}${pathname}`
+            const foundCounter = boundInstruments.get(key);
+            if (foundCounter) {
+                return foundCounter;
+            }
+            const labels = { pathname, host, protocol };
+            const counter = requestCount.bind(labels);
+            boundInstruments.set(key, counter);
+            return counter;
+        }
+
         async function run() {
+            const counter = getBoundCounter(httpRequest.url);
+            counter?.add(1);
             const environment = await getRuntimeEnvironment()
             const controller = new AbortController()
             environment.addAbortController(controller)

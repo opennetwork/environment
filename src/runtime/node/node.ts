@@ -19,10 +19,11 @@ export class Environment extends EnvironmentTemplate {
         return localStorage.getStore()
     }
 
-    configure(): void {
+    async configure() {
         const flags = Object.keys(process.env).filter(key => process.env[key] === "true")
         flags.forEach(flag => createFlag(flag))
         flags.forEach(flag => setFlag(flag))
+        await import("./tracing");
     }
 
     async postConfigure() {
