@@ -69,12 +69,12 @@ async function getResponseForGET(request: Request): Promise<Response> {
 addEventListener("fetch", async ({ respondWith, request }) => {
     try {
         if (request.method === "GET") {
-            return respondWith(getResponseForGET(request))
+            return respondWith(await getResponseForGET(request))
         } else if (request.method === "PUT") {
             const { pathname } = new URL(request.url, 'http://localhost');
             if (pathname === '/data') {
-                console.log({ requestBody: await request.json() });
-                return respondWith(getResponseForGET(request));
+                console.log({ body: await request.json() });
+                return respondWith(await getResponseForGET(request));
             }
         } else {
             respondWith(notFound());
