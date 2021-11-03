@@ -13,6 +13,7 @@
   "license": "MIT",
   "private": false,
   "devDependencies": {
+    "@types/jsdom": "^16.2.13",
     "@types/node": "^13.13.4",
     "commander": "^5.1.0",
     "esm": "^3.2.25",
@@ -60,6 +61,7 @@
     "dependency-graph": "^0.9.0",
     "dom-lite": "^20.2.0",
     "iterable": "^5.7.0",
+    "jsdom": "^18.0.1",
     "lit-html": "^1.2.1"
   }
 }

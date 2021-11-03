@@ -1,3 +1,4 @@
+import "./render";
 import "./fetch";
 import "./storage";
 import "./flags";

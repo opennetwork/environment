@@ -1,4 +1,4 @@
-import { Environment as EnvironmentTemplate } from "../../environment/environment"
+import {Environment as EnvironmentTemplate, setEnvironment} from "../../environment/environment"
 import {BrowserStorage, BrowserStore, BrowserStoreOptions} from "./storage/local"
 import {setStore} from "../../storage/storage"
 
@@ -44,6 +44,8 @@ export class Environment extends EnvironmentTemplate {
     }
 
     async configure(): Promise<void> {
+
+        setEnvironment(() => this);
 
         const config = {
             ...isBrowserEnvironmentConfigWindow(window) ? window[BrowserEnvironmentConfig] : {}

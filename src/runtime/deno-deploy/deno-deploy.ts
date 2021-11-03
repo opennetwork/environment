@@ -1,4 +1,4 @@
-import { Environment as EnvironmentTemplate } from "../../environment/environment"
+import {Environment as EnvironmentTemplate, setEnvironment} from "../../environment/environment"
 import { start as startFetchService } from "./fetch-service";
 
 let instance: Environment | undefined = undefined
@@ -12,6 +12,10 @@ export class Environment extends EnvironmentTemplate {
             instance = this
         }
         instances += 1
+    }
+
+    configure() {
+        setEnvironment(() => this);
     }
 
     static getEnvironment() {

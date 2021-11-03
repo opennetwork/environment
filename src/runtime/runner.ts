@@ -1,4 +1,4 @@
-import { dispatchEvent } from "../environment/environment"
+import {dispatchEvent, getEnvironment, setEnvironment} from "../environment/environment"
 import { getRuntimeEnvironment } from "./environment"
 import { runWithSpan } from "../tracing/tracing"
 import { EnvironmentConfig, setEnvironmentConfig } from "../config/config"
@@ -9,15 +9,12 @@ export async function run(config: EnvironmentConfig) {
 
         await environment.runInAsyncScope(async () => {
 
-            await setEnvironmentConfig(config)
-
             await runWithSpan("environment", { attributes: { name: environment.name } }, async () => {
 
-                console.log({ environment });
-
-                await runWithSpan("environment_configure", {}, () => {
+                await runWithSpan("environment_configure", {}, async () => {
                     if (environment.configure) {
                         environment.configure()
+                        await setEnvironmentConfig(config)
                     }
                 })
 
@@ -28,7 +25,6 @@ export async function run(config: EnvironmentConfig) {
                 })
 
                 await runWithSpan("environment_post_configure", {}, () => {
-                    console.log("environment_post_configure", environment.postConfigure);
                     if (environment.postConfigure) {
                         environment.postConfigure()
                     }

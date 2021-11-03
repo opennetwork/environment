@@ -1,6 +1,6 @@
 import { getPort } from "./service";
 import {
-    addEventListener,
+    addEventListener, getEnvironment,
     hasEventListener
 } from "../../environment/environment"
 import { hasFlag } from "../../flags/flags"
@@ -37,6 +37,9 @@ addEventListener("configure", async () => {
 
 export async function start(): Promise<void> {
     const config = getEnvironmentConfig()
+    const environment = getEnvironment();
+
+    console.log({ fetchEnvironment: environment });
 
     console.log("Start fetch service", config.fetchService);
 

@@ -1,7 +1,11 @@
-import { addEventListener } from "../environment/environment";
+import {addEventListener, dispatchEvent, getEnvironment} from "../environment/environment";
 import { Response, Request } from "@opennetwork/http-representation";
 import { dispatchFetchEvent, fetch} from "../fetch/fetch";
 import {FetchEvent} from "../fetch/event";
+import {defer} from "../deferred";
+import {RenderFunction} from "../render/render-function";
+import {h, isVNode} from "@virtualstate/fringe";
+import {render} from "@virtualstate/dom";
 
 function notFound() {
     return new Response("Not Found", {
@@ -9,9 +13,44 @@ function notFound() {
     })
 }
 
-async function getResponseForGET({ url }: Request): Promise<Response> {
+async function getDocument(): Promise<Document> {
+    const environment = getEnvironment();
+    if (typeof window !== "undefined" && typeof window.document !== "undefined") {
+        return window.document;
+    } else if (environment.name.includes("deno")) {
+        const { DOMParser } = await import("deno-dom-wasm");
+        return new DOMParser().parseFromString("<head><title></title></head><body />", "text/html");
+    } else {
+        const { default: JSDOM } = await import("jsdom");
+        const dom = new JSDOM.JSDOM();
+        return dom.window.document;
+    }
+}
+
+async function getResponseForGET(request: Request): Promise<Response> {
+    const { url } = request;
     const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
-    console.log({ pathname });
+    if (pathname === "/view") {
+        const { resolve, promise } = defer<RenderFunction>();
+        const eventPromise = dispatchEvent({
+            type: "render",
+            render: resolve
+        });
+        const node = await promise;
+        const view = h(node, { request });
+        const document = await getDocument();
+        const root = document.createElement("div");
+        root.id = "root";
+        document.body.appendChild(root);
+        await render(view, root);
+        await eventPromise;
+        return new Response(root.innerHTML, {
+            status: 200,
+            headers: {
+                "Content-Type": "text/html"
+            }
+        });
+    }
     if (pathname === "/data") {
         return new Response(JSON.stringify({
             data: "value!"
@@ -36,16 +75,22 @@ async function getResponseForGET({ url }: Request): Promise<Response> {
 }
 
 addEventListener("fetch", async ({ respondWith, request }) => {
-    if (request.method === "GET") {
-        return respondWith(getResponseForGET(request))
-    } else if (request.method === "PUT") {
-        const { pathname } = new URL(request.url, 'http://localhost');
-        if (pathname === '/data') {
-            console.log({ requestBody: await request.json() });
-            return respondWith(getResponseForGET(request));
+    try {
+        if (request.method === "GET") {
+            return respondWith(getResponseForGET(request))
+        } else if (request.method === "PUT") {
+            const { pathname } = new URL(request.url, 'http://localhost');
+            if (pathname === '/data') {
+                console.log({ requestBody: await request.json() });
+                return respondWith(getResponseForGET(request));
+            }
+        } else {
+            respondWith(notFound());
         }
-    } else {
-        respondWith(notFound());
+    } catch (error) {
+        respondWith(new Response(`${error}`, {
+            status: 500
+        }))
     }
 })
 
@@ -107,4 +152,12 @@ addEventListener("execute", async () => {
     });
     const { data } = await response.json();
     console.log({ data });
+})
+
+addEventListener("execute", async () => {
+    const response = await fetch("/view", {
+        method: "GET"
+    });
+    const view = await response.text();
+    console.log({ view });
 })

@@ -1,4 +1,8 @@
-export interface RenderProps {
-    children: unknown
+import { VNode } from "@virtualstate/fringe";
+
+export interface RenderProps extends Record<string, any> {
+
 }
-export type RenderFunction = (props: RenderProps) => unknown
+export interface RenderFunction {
+    (props: RenderProps): VNode
+}

@@ -6,4 +6,8 @@ export class Environment extends EnvironmentTemplate {
         super("node/aws-lambda")
     }
 
+    async configure() {
+        await super.configure();
+    }
+
 }

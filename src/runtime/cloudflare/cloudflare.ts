@@ -1,4 +1,4 @@
-import { Environment as EnvironmentTemplate } from "../../environment/environment"
+import {Environment as EnvironmentTemplate, setEnvironment} from "../../environment/environment"
 
 let instance: Environment | undefined = undefined
 let instances = 0
@@ -11,6 +11,10 @@ export class Environment extends EnvironmentTemplate {
             instance = this
         }
         instances += 1
+    }
+
+    configure() {
+        setEnvironment(() => this);
     }
 
     static getEnvironment() {
