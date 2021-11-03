@@ -5,6 +5,7 @@ import {FetchEvent} from "../fetch/event";
 import {defer} from "../deferred";
 import {RenderFunction} from "../render/render-function";
 import {h, toString, VNode} from "@virtualstate/fringe";
+import AbortController from "abort-controller";
 
 function notFound() {
     return new Response("Not Found", {
@@ -16,14 +17,18 @@ async function getResponseForGET(request: Request): Promise<Response> {
     const { url } = request;
     const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
     if (pathname === "/view") {
+        const controller = new AbortController();
         const { resolve: render, promise } = defer<RenderFunction | VNode>();
         const eventPromise = dispatchEvent({
             type: "render",
-            render
-        });
+            render,
+            signal: controller.signal
+        }).catch(() => void 0 /* TODO */);
         const node = await promise;
-        const view = h(node, { request });
+        const view = h(node, { request, signal: controller.signal });
         const string = await toString(view);
+        // Abort after toString is completed to terminate all
+        controller.abort();
         await eventPromise;
         return new Response(string, {
             status: 200,
