@@ -5,6 +5,7 @@ import { VNode } from "@virtualstate/fringe";
 
 export interface RenderEvent extends Event<"render"> {
     render(fn: RenderFunction | VNode): void | Promise<void>
+    signal: AbortSignal
 }
 
 declare global {
