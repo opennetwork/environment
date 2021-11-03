@@ -32,11 +32,6 @@ async function getResponseForGET(request: Request): Promise<Response> {
             }
         });
     }
-    if (pathname === "/data") {
-        return new Response(JSON.stringify({
-            data: "value!"
-        }), { status: 200 });
-    }
     if (pathname === "/ping") {
         return new Response("Pong", {
             status: 200
@@ -51,6 +46,22 @@ async function getResponseForGET(request: Request): Promise<Response> {
         return new Response("World", {
             status: 200
         });
+    }
+    if (pathname === "/data" || pathname === "/browser-data") {
+        return new Response(JSON.stringify({
+            data: "value!"
+        }), { status: 200 });
+    }
+    if (pathname === "/browser-script") {
+        return new Response(`
+        const response = await fetch("/browser-data");
+        window.data = await response.json();
+        `, {
+            status: 200,
+            headers: {
+                "Content-Type": "application/javascript"
+            }
+        })
     }
     return notFound();
 }

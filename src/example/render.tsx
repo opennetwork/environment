@@ -17,6 +17,7 @@ addEventListener("render", async ({ render }) => {
                     <a href="https://example.com" target="_blank">example.com</a>
                 </footer>
             </body>
+            <script type="module" src="/browser-script">  </script>
         </html>
     );
 });
