@@ -1,30 +1,15 @@
-import {addEventListener, dispatchEvent, getEnvironment} from "../environment/environment";
+import {addEventListener, dispatchEvent} from "../environment/environment";
 import { Response, Request } from "@opennetwork/http-representation";
 import { dispatchFetchEvent, fetch} from "../fetch/fetch";
 import {FetchEvent} from "../fetch/event";
 import {defer} from "../deferred";
 import {RenderFunction} from "../render/render-function";
-import {h, isVNode} from "@virtualstate/fringe";
-import {render} from "@virtualstate/dom";
+import {h, toString} from "@virtualstate/fringe";
 
 function notFound() {
     return new Response("Not Found", {
         status: 404
     })
-}
-
-async function getDocument(): Promise<Document> {
-    const environment = getEnvironment();
-    if (typeof window !== "undefined" && typeof window.document !== "undefined") {
-        return window.document;
-    } else if (environment.name.includes("deno")) {
-        const { DOMParser } = await import("deno-dom-wasm");
-        return new DOMParser().parseFromString("<head><title></title></head><body />", "text/html");
-    } else {
-        const { default: JSDOM } = await import("jsdom");
-        const dom = new JSDOM.JSDOM();
-        return dom.window.document;
-    }
 }
 
 async function getResponseForGET(request: Request): Promise<Response> {
@@ -38,13 +23,9 @@ async function getResponseForGET(request: Request): Promise<Response> {
         });
         const node = await promise;
         const view = h(node, { request });
-        const document = await getDocument();
-        const root = document.createElement("div");
-        root.id = "root";
-        document.body.appendChild(root);
-        await render(view, root);
+        const string = await toString(view);
         await eventPromise;
-        return new Response(root.innerHTML, {
+        return new Response(string, {
             status: 200,
             headers: {
                 "Content-Type": "text/html"
