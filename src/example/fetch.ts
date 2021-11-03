@@ -4,7 +4,7 @@ import { dispatchFetchEvent, fetch} from "../fetch/fetch";
 import {FetchEvent} from "../fetch/event";
 import {defer} from "../deferred";
 import {RenderFunction} from "../render/render-function";
-import {h, toString} from "@virtualstate/fringe";
+import {h, toString, VNode} from "@virtualstate/fringe";
 
 function notFound() {
     return new Response("Not Found", {
@@ -16,10 +16,10 @@ async function getResponseForGET(request: Request): Promise<Response> {
     const { url } = request;
     const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
     if (pathname === "/view") {
-        const { resolve, promise } = defer<RenderFunction>();
+        const { resolve: render, promise } = defer<RenderFunction | VNode>();
         const eventPromise = dispatchEvent({
             type: "render",
-            render: resolve
+            render
         });
         const node = await promise;
         const view = h(node, { request });
