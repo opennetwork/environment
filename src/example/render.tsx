@@ -1,7 +1,9 @@
 import {h, createFragment} from "@virtualstate/fringe";
 import {addEventListener} from "../environment/environment";
 
-addEventListener("render", async ({ render }) => {
+addEventListener("render", async ({ render, signal }) => {
+    signal.addEventListener("abort", () => void 0);
+
     await render(
         <html>
             <head>
