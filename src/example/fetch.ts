@@ -13,6 +13,16 @@ function notFound() {
     })
 }
 
+function isScalar(node: VNode) {
+    if (!node.scalar) return false;
+    return node.source !== "script";
+}
+
+function getBody(node: VNode, body: string) {
+    if (body || node.source !== "script") return body;
+    return "\n";
+}
+
 async function getResponseForGET(request: Request): Promise<Response> {
     const { url } = request;
     const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
@@ -26,7 +36,7 @@ async function getResponseForGET(request: Request): Promise<Response> {
         }).catch(() => void 0 /* TODO */);
         const node = await promise;
         const view = h(node, { request, signal: controller.signal });
-        const string = await toString(view);
+        const string = await toString.call({ isScalar, getBody }, view);
         // Abort after toString is completed to terminate all
         controller.abort();
         await eventPromise;
@@ -60,7 +70,8 @@ async function getResponseForGET(request: Request): Promise<Response> {
     if (pathname === "/browser-script") {
         return new Response(`
         const response = await fetch("/browser-data");
-        window.data = await response.json();
+        window.initialData = window.data;
+        window.data = window.fetchedData = await response.json();
         `, {
             status: 200,
             headers: {
