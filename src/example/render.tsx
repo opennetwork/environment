@@ -49,17 +49,7 @@ addEventListener("render", async ({ render, signal, request }) => {
                 <footer>
                     <a href="https://example.com" target="_blank">example.com</a>
                 </footer>
-                <script type="application/json" id="data">{data}</script>
-                <script type="module">
-                    {`
-window.data = JSON.parse(
-    document.querySelector("script#data").textContent
-);
-${script ?? ""}
-`}
-                </script>
-                <script type="module" src="/browser-script">
-                </script>
+                {script}
             </>
         )
     }
@@ -70,11 +60,13 @@ ${script ?? ""}
                 <Layout
                     title={`In Template ${id}!`}
                     class={`templated-${id}`}
+                    script={
+                        <script type="module" src="/template-script">
+                        </script>
+                    }
                 >
                     <p key="zee">Content loaded</p>
                     <p attr={false} other={true} value={1} one="two">Content there</p>
-                    <script type="module" src="/template-script">
-                    </script>
                 </Layout>
             </template>
         )
@@ -88,7 +80,17 @@ ${script ?? ""}
             <body>
                 <Layout
                     script={
-                        `
+                        <>
+                            <script type="application/json" id="data">{data}</script>
+                            <script type="module">
+                                {`
+window.data = JSON.parse(
+    document.querySelector("script#data").textContent
+);
+`}
+                            </script>
+                            <script type="module">
+                                {`
 const response = await fetch("/template?id=${id}");
 const templateHTML = await response.text();
 const templateRoot = document.createElement("div");
@@ -98,8 +100,8 @@ if (template) {
     const imports = getImports(template.content);
     const existing = getImports(document);
     const remaining = imports.filter(src => !existing.includes(src));
-    template.content.querySelectorAll("script").forEach(element => element.remove());
-    document.body.replaceWith(...Array.from(template.content.children));
+    template.content.querySelectorAll("script[src]").forEach(element => element.remove());
+    document.body.replaceChildren(...Array.from(template.content.children));
     await Promise.all(imports.map(src => import(src)));
 }
 
@@ -107,7 +109,12 @@ function getImports(root) {
     const scripts = Array.from(root.querySelectorAll("script[type=module][src]"));
     return scripts.map(script => script.getAttribute("src"));
 }
-                   `}
+                                `.trim()}
+                            </script>
+                            <script type="module" src="/browser-script">
+                            </script>
+                        </>
+                    }
                 />
             </body>
         </html>
