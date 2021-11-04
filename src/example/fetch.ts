@@ -48,7 +48,8 @@ async function getResponseForGET(request: Request): Promise<Response> {
         // Abort after toString is completed to terminate all
         controller.abort();
         await eventPromise;
-        return new Response(string, {
+        return new Response(
+            `<!DOCTYPE html>\n${string}`, {
             status: 200,
             headers: {
                 "Content-Type": "text/html"
