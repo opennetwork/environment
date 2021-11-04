@@ -19,7 +19,12 @@ function isScalar(node: VNode) {
 }
 
 function getBody(node: VNode, body: string) {
-    if (body || node.source !== "script") return body;
+    if (body) {
+        return `\n${body.split("\n").map(value => `  ${value}`).join("\n")}\n`;
+    }
+    if (node.source !== "script") {
+        return ""
+    }
     return "\n";
 }
 
@@ -36,6 +41,9 @@ async function getResponseForGET(request: Request): Promise<Response> {
         }).catch(() => void 0 /* TODO */);
         const node = await promise;
         const view = h(node, { request, signal: controller.signal });
+        // for await (const stringIteration of toString.call({ isScalar, getBody }, view)) {
+        //     console.log({ stringIteration });
+        // }
         const string = await toString.call({ isScalar, getBody }, view);
         // Abort after toString is completed to terminate all
         controller.abort();
