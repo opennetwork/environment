@@ -15,7 +15,8 @@ function notFound() {
 
 function isScalar(node: VNode) {
     if (!node.scalar) return false;
-    return node.source !== "script";
+    const tags: unknown[] = ["script", "link", "meta"];
+    return !tags.includes(node.source);
 }
 
 function getBody(node: VNode, body: string) {
@@ -31,13 +32,14 @@ function getBody(node: VNode, body: string) {
 async function getResponseForGET(request: Request): Promise<Response> {
     const { url } = request;
     const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
-    if (pathname === "/view") {
+    if (pathname === "/view" || pathname === "/template") {
         const controller = new AbortController();
         const { resolve: render, promise } = defer<RenderFunction | VNode>();
         const eventPromise = dispatchEvent({
             type: "render",
             render,
-            signal: controller.signal
+            signal: controller.signal,
+            request
         }).catch(() => void 0 /* TODO */);
         const node = await promise;
         const view = h(node, { request, signal: controller.signal });
@@ -49,7 +51,7 @@ async function getResponseForGET(request: Request): Promise<Response> {
         controller.abort();
         await eventPromise;
         return new Response(
-            `<!DOCTYPE html>\n${string}`, {
+            `${pathname.includes("template") ? "" : "<!DOCTYPE html>\n"}${string}`, {
             status: 200,
             headers: {
                 "Content-Type": "text/html"
@@ -71,9 +73,10 @@ async function getResponseForGET(request: Request): Promise<Response> {
             status: 200
         });
     }
-    if (pathname === "/data" || pathname === "/browser-data") {
+    if (pathname === "/data" || pathname === "/browser-data" || pathname === "/template-data") {
         return new Response(JSON.stringify({
-            data: "value!"
+            data: "value!",
+            pathname
         }), { status: 200 });
     }
     if (pathname === "/browser-script") {
@@ -81,6 +84,30 @@ async function getResponseForGET(request: Request): Promise<Response> {
         const response = await fetch("/browser-data");
         window.initialData = window.data;
         window.data = window.fetchedData = await response.json();
+        console.log({
+            initialData: window.initialData,
+            fetchedData: window.fetchedData,
+            data: window.data
+        });
+        `, {
+            status: 200,
+            headers: {
+                "Content-Type": "application/javascript"
+            }
+        })
+    }
+    if (pathname === "/template-script") {
+        return new Response(`
+        const response = await fetch("/template-data");
+        window.initialTemplateData = window.data;
+        window.data = window.fetchedTemplateData = await response.json();
+        console.log({
+            initialData: window.initialData,
+            fetchedData: window.fetchedData,
+            initialTemplateData: window.initialTemplateData,
+            fetchedTemplateData: window.fetchedTemplateData,
+            data: window.data
+        });
         `, {
             status: 200,
             headers: {
@@ -177,4 +204,12 @@ addEventListener("execute", async () => {
     });
     const view = await response.text();
     console.log({ view });
+})
+
+addEventListener("execute", async () => {
+    const response = await fetch("/template?id=1", {
+        method: "GET"
+    });
+    const template = await response.text();
+    console.log({ template });
 })

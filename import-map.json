@@ -23,6 +23,7 @@
     "iterable": "https://cdn.skypack.dev/iterable",
     "microtask-collector": "https://cdn.skypack.dev/microtask-collector",
     "deno:std/http/server": "https://deno.land/std@0.111.0/http/server.ts",
-    "deno-dom-wasm": "https://deno.land/x/deno_dom/deno-dom-wasm.ts"
+    "deno-dom-wasm": "https://deno.land/x/deno_dom/deno-dom-wasm.ts",
+    "uuid": "./src/uuid.ts"
   }
 }
