@@ -20,7 +20,6 @@ export class Environment extends EnvironmentTemplate {
     }
 
     async postConfigure() {
-        console.log({ post: getEnvironment() });
         this.addService(startFetchService())
     }
 

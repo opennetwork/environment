@@ -160,15 +160,9 @@ export class EventTarget implements EventTarget {
                             await promise
                         } catch (error) {
                             if (!isSignalHandled(event, error)) {
-                                if (await this.hasEventListener("error")) {
-                                    await this.dispatchEvent({
-                                        type: "error",
-                                        error
-                                    })
-                                } else {
-                                    trace("unhandled_errors", { unhandled: JSON.stringify([{ state: "rejected", reason: error }]) })
-                                    throw error
-                                }
+                                await Promise.reject(error);
+                            } else {
+                                trace("error_handled", { handled: 1 })
                             }
                         }
                         if (isSignalEvent(event) && event.signal.aborted) {
@@ -207,18 +201,11 @@ export class EventTarget implements EventTarget {
                                 trace("error_handled", { handled })
                             }
                         }
-
-                        if (unhandled[0]) {
-                            if (await this.hasEventListener("error")) {
-                                await this.dispatchEvent({
-                                    type: "error",
-                                    error: unhandled[0].reason,
-                                    errors: unhandled.map(({ reason }) => reason)
-                                })
-                            } else {
-                                trace("unhandled_errors", { unhandled: JSON.stringify(unhandled) })
-                                throw unhandled[0].reason
-                            }
+                        if (unhandled.length === 1) {
+                            await Promise.reject(unhandled[0]);
+                            throw unhandled[0]; // We shouldn't get here
+                        } else if (unhandled.length > 1) {
+                            throw new AggregateError(unhandled);
                         }
                     }
                 }

@@ -53,7 +53,6 @@ export function trace(name: string, keyValuePairs: SpanAttributes = {}, timestam
 }
 
 export function error(error: unknown, timestamp?: number, span: Span | undefined = getSpan()) {
-    console.error(error);
     if (span) {
         if (error instanceof Error) {
             span.addEvent("error", {

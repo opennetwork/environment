@@ -134,13 +134,38 @@ export async function start(): Promise<void> {
             "http.method": httpRequest.method
         }
 
-        runWithSpan("request", { attributes }, run).catch(error => {
+        // Top level errors returned from the promise here will end up with the default
+        // global error process with Node.js
+        // https://nodejs.org/api/process.html#event-unhandledrejection
+        void runWithSpan("request", { attributes }, run).catch(async error => {
+            console.log("beforehand", { error });
             traceError(error)
-            if (response.writableEnded) {
-                return
+            let errorHandled = false;
+            if (await hasEventListener("fetch-error")) {
+                await dispatchEvent({
+                    type: "fetch-error",
+                    error,
+                    rawResponse: response
+                });
+                errorHandled = true;
+            } else if (await hasEventListener("error")) {
+                await dispatchEvent({
+                    type: "error",
+                    error,
+                    rawResponse: response
+                });
+                errorHandled = true;
             }
-            response.writeHead(500)
-            response.end()
+            console.log({ errorHandled });
+            try {
+                response.writeHead(500);
+                response.end();
+            } catch (error) {
+                void error;
+            }
+            if (!errorHandled) {
+                return Promise.reject(error);
+            }
         })
 
         function getBoundCounter(url: string): ReturnType<NonNullable<typeof requestCount>["bind"]> | undefined {

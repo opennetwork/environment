@@ -1,3 +1,4 @@
+import "./error";
 import "./render";
 import "./fetch";
 import "./storage";

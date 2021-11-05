@@ -1,9 +1,10 @@
-import {dispatchEvent, ExecuteEvent, getEnvironment} from "../environment/environment"
+import {dispatchEvent, ExecuteEvent, getEnvironment, hasEventListener} from "../environment/environment"
 import { getRuntimeEnvironment } from "./environment"
 import { runWithSpan } from "../tracing/tracing"
 import { EnvironmentConfig, setEnvironmentConfig } from "../config/config"
 
 export async function run(config: EnvironmentConfig) {
+    const errors: unknown[] = [];
     try {
         const environment = await getRuntimeEnvironment(config)
         await environment.runInAsyncScope(async () => {
@@ -41,11 +42,15 @@ export async function run(config: EnvironmentConfig) {
                     }
                     await runWithSpan("environment_wait_for_services", {}, () => environment.waitForServices())
                 } catch (error) {
-                    console.error({ error })
-                    await dispatchEvent({
-                        type: "error",
-                        error
-                    })
+                    if (await hasEventListener("error")) {
+                        await dispatchEvent({
+                            type: "error",
+                            error
+                        })
+                    } else {
+                        console.error(error);
+                        errors.push(error);
+                    }
                 } finally {
                     await dispatchEvent({
                         type: "complete",
@@ -62,6 +67,13 @@ export async function run(config: EnvironmentConfig) {
 
     } catch (error) {
         console.error(error)
-        throw error
+        errors.push(error);
+    }
+    if (errors.length === 1) {
+        // Bypass throw, retain original error stack
+        await Promise.reject(errors[0]);
+        throw "Unexpected resolution"; // We shouldn't be able to get here ever.
+    } else if (errors.length > 1) {
+        throw new AggregateError(errors);
     }
 }

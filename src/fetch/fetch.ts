@@ -58,12 +58,7 @@ export async function dispatchFetchEvent<T extends string>({
             environment.addService(
                 Promise.resolve(httpResponse)
                     .then(respondWith)
-                    .catch(error => {
-                        if (isSignalHandled(event, error)) {
-                            return
-                        }
-                        respondWithError(error)
-                    })
+                    .catch(respondWithError)
             )
         },
         async waitUntil(promise: Promise<unknown>): Promise<void> {
@@ -90,9 +85,15 @@ export async function dispatchFetchEvent<T extends string>({
                 }))
             }, typeof abortTimeout === "number" ? abortTimeout : 30000)
         }
-        await environment.runInAsyncScope(async () => {
-            await dispatchEvent(event);
-        })
+        try {
+            await environment.runInAsyncScope(async () => {
+                await dispatchEvent(event);
+            })
+        } catch (error) {
+            respondWith(new AnyResponse(`${error}`, {
+                status: 500
+            }));
+        }
         return [event, responded];
     } finally {
         environment.addService(responded)

@@ -118,15 +118,26 @@ async function getResponseForGET(request: Request): Promise<Response> {
             }
         })
     }
+    if (pathname === "/500") {
+        return new Response("", {
+            status: 500
+        })
+    }
+    if (pathname === "/uncaught-error-inner") {
+        throw new Error("Externally triggered uncaught error");
+    }
     return notFound();
 }
 
 addEventListener("fetch", async ({ respondWith, request }) => {
+    const { pathname } = new URL(request.url, 'http://localhost');
+    if (pathname === "/uncaught-error") {
+        throw new Error("Externally triggered uncaught error");
+    }
     try {
         if (request.method === "GET") {
             return respondWith(await getResponseForGET(request))
         } else if (request.method === "PUT") {
-            const { pathname } = new URL(request.url, 'http://localhost');
             if (pathname === '/data') {
                 console.log({ body: await request.json() });
                 return respondWith(await getResponseForGET(request));
@@ -215,4 +226,25 @@ addEventListener("execute", async () => {
     });
     const template = await response.text();
     console.log({ template });
+})
+
+addEventListener("execute", async () => {
+    const response = await fetch("/500", {
+        method: "GET"
+    });
+    console.log({ 500: response.status === 500 });
+})
+
+addEventListener("execute", async () => {
+    const response = await fetch("/uncaught-error", {
+        method: "GET"
+    });
+    console.log({ uncaughtIs500: response.status === 500 });
+})
+
+addEventListener("execute", async () => {
+    const response = await fetch("/uncaught-error-inner", {
+        method: "GET"
+    });
+    console.log({ uncaughtInnerIs500: response.status === 500 });
 })
