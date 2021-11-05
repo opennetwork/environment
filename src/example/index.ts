@@ -3,6 +3,7 @@ import "./render";
 import "./fetch";
 import "./storage";
 import "./flags";
+import "./test";
 import {addEventListener} from "../environment/environment";
 
 addEventListener("complete", () => {

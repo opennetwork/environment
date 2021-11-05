@@ -27,9 +27,13 @@ export function getEnabledFlags(): string[] {
 }
 
 export function getPort(env: string, def?: number) {
-    const value = Deno.env.get(env);
-    if (!value || !/^\d+$/.test(value)) {
-        return def
+    try {
+        const value = Deno.env.get(env);
+        if (!value || !/^\d+$/.test(value)) {
+            return def
+        }
+        return +value
+    } catch {
+        return def;
     }
-    return +value
 }

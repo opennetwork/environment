@@ -7,6 +7,7 @@ import {getEvent} from "../events/event/dispatcher";
 import {FetchEvent} from "../fetch/event";
 import {RenderEvent} from "../render/render";
 import {addRequestEventHandler} from "./event";
+import {addRenderEventListener} from "./lib";
 
 async function Layout({ title, script, class: mainClass, id }: Record<string, unknown>, child: VNode) {
     const response = await fetch("/data", {
@@ -34,10 +35,6 @@ async function Layout({ title, script, class: mainClass, id }: Record<string, un
 
 function getId({ searchParams }: URL) {
     return /^[a-z0-9-_+]+$/.test(searchParams.get("id") ?? "") ? searchParams.get("id") : v4();
-}
-
-function addRenderEventListener(options: { method?: string | RegExp, pathname?: string | RegExp }, fn: ((event: RenderEvent & { url: URL }) => Promise<void> | void)): void {
-    addRequestEventHandler("render", options, fn);
 }
 
 addRenderEventListener({ method: "GET", pathname: "/template" }, ({ render, url }) => {
