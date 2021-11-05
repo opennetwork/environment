@@ -1,4 +1,4 @@
-import {addEventListener} from "../environment/environment";
+import {addEventListener, dispatchEvent} from "../environment/environment";
 import { Response } from "@opennetwork/http-representation";
 import { fetch} from "../fetch/fetch";
 import {addFetchEventListener, addRenderFetchEventListener} from "./lib";
@@ -98,6 +98,15 @@ addFetchEventListener({ pathname: "/uncaught-error-inner" }, ({ respondWith }) =
 addFetchEventListener({ pathname: "/uncaught-error" }, () => {
     throw new Error("Externally triggered uncaught error")
 });
+
+addFetchEventListener({ pathname: "/internal-test" }, async ({ respondWith, request, url }) => {
+    await dispatchEvent({
+        type: "test",
+        request,
+        url
+    });
+    respondWith(new Response("OK", { status: 200 }));
+})
 
 addEventListener("fetch", async ({ respondWith }) => {
     respondWith(notFound());

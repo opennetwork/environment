@@ -3,8 +3,9 @@ import {dispatchFetchEvent, fetch} from "../fetch/fetch";
 import {Request, Response} from "@opennetwork/http-representation";
 import {FetchEvent} from "../fetch/event";
 
+addEventListener("test", () => console.log("Execute tests"));
+
 addEventListener("test", async () => {
-    console.log("Execute");
     const [, promise] = await dispatchFetchEvent({
         request: new Request("/ping", {
             method: "GET"
