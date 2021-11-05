@@ -118,39 +118,40 @@ async function getResponseForGET(request: Request): Promise<Response> {
             }
         })
     }
-    if (pathname === "/500") {
+    if (/^\/\d{3}$/.test(pathname)) {
         return new Response("", {
-            status: 500
+            status: +pathname.substr(1)
         })
     }
     if (pathname === "/uncaught-error-inner") {
-        throw new Error("Externally triggered uncaught error");
+        throw new Error("Externally triggered uncaught inner error");
     }
     return notFound();
 }
 
-addEventListener("fetch", async ({ respondWith, request }) => {
+addEventListener("fetch", async ({ request }) => {
     const { pathname } = new URL(request.url, 'http://localhost');
     if (pathname === "/uncaught-error") {
         throw new Error("Externally triggered uncaught error");
     }
-    try {
-        if (request.method === "GET") {
-            return respondWith(await getResponseForGET(request))
-        } else if (request.method === "PUT") {
-            if (pathname === '/data') {
-                console.log({ body: await request.json() });
-                return respondWith(await getResponseForGET(request));
-            }
-        } else {
-            respondWith(notFound());
-        }
-    } catch (error) {
-        respondWith(new Response(`${error}`, {
-            status: 500
-        }))
-    }
-})
+});
+
+addEventListener("fetch", async ({ respondWith, request }) => {
+    if (!["POST", "PUT"].includes(request.method)) return;
+    const { pathname } = new URL(request.url, 'http://localhost');
+    if (pathname !== '/data') return;
+    console.log({ body: await request.json() });
+    return respondWith(await getResponseForGET(request));
+});
+
+addEventListener("fetch", async ({ respondWith, request }) => {
+    if (!["GET", "PUT"].includes(request.method)) return;
+    respondWith(await getResponseForGET(request));
+});
+
+addEventListener("fetch", async ({ respondWith }) => {
+    respondWith(notFound());
+});
 
 addEventListener("execute", async () => {
     console.log("Execute");
