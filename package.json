@@ -23,12 +23,12 @@
   "scripts": {
     "build": "rm -rf esnext && mkdir esnext && tsc && npm run postbuild",
     "postbuild": "node scripts/post-build.js",
-    "deno:dev": "yarn build && yarn deno:example",
-    "deno:dev:reload": "yarn build && yarn deno:example:reload",
-    "node:dev": "yarn build && yarn node:example",
+    "deno:dev": "yarn build && FLAGS=POST_CONFIGURE_TEST yarn deno:example",
+    "deno:dev:reload": "yarn build && FLAGS=POST_CONFIGURE_TEST yarn deno:example:reload",
+    "node:dev": "yarn build && FLAGS=POST_CONFIGURE_TEST yarn node:example",
     "node:example": "FETCH_SERVICE_PORT=8080 node --trace-warnings ./esnext/example/index.js",
-    "deno:example": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT ./esnext/example/index.js",
-    "deno:example:reload": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT --reload ./esnext/example/index.js"
+    "deno:example": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS ./esnext/example/index.js",
+    "deno:example:reload": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS --reload ./esnext/example/index.js"
   },
   "esm": {
     "cjs": true,

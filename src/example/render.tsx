@@ -102,7 +102,7 @@ async function replaceBodyWithTemplate(template) {
 
 async function fetchTemplate(url) {
   const { pathname } = new URL(url, location.origin);
-  const existingTemplate = document.querySelector(\`template[pathname="\${pathname}"]\`);
+  const existingTemplate = document.querySelector(\`template[mount][pathname="\${pathname}"]\`);
   if (existingTemplate) return replaceBodyWithTemplate(existingTemplate);
   const response = await fetch(url, {
     headers: {

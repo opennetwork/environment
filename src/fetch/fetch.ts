@@ -8,23 +8,23 @@ import {trace} from "../tracing/span";
 import {globalFetch} from "./global";
 
 export async function fetch(url: string, init?: RequestInit): Promise<AnyResponse | Response> {
-    if (!(await hasEventListener("fetch"))) {
-        if (globalFetch) {
-            return globalFetch(url, init);
-        }
-        throw new Error("Not Implemented");
-    }
     let type: "fetch" | "external-fetch" | "internal-fetch" = "fetch";
     if (url.startsWith("https://") || url.startsWith("http://")) {
-       if (await hasEventListener("external-fetch")) {
-           type = "external-fetch";
-       } else {
-           throw new Error("Not Implemented");
-       }
+        if (await hasEventListener("external-fetch")) {
+            type = "external-fetch";
+        } else {
+            throw new Error("Not Implemented");
+        }
     } else {
         if (await hasEventListener("internal-fetch")) {
             type = "internal-fetch";
         }
+    }
+    if (!(await hasEventListener(type))) {
+        if (globalFetch) {
+            return globalFetch(url, init);
+        }
+        throw new Error("Not Implemented");
     }
     const request = new Request(new URL(url, 'internal://localhost').toString(), init);
     const [, response] = await dispatchFetchEvent({

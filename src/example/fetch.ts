@@ -155,7 +155,7 @@ addEventListener("fetch", async ({ respondWith }) => {
     respondWith(notFound());
 });
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     console.log("Execute");
     const [, promise] = await dispatchFetchEvent({
         request: new Request("/ping", {
@@ -168,7 +168,7 @@ addEventListener("execute", async () => {
     console.log({ ping });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/pong", {
         method: "GET"
     });
@@ -188,7 +188,7 @@ addEventListener("external-fetch", async ({ request, respondWith }: FetchEvent<"
     }));
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("https://example.com", {
         method: "GET"
     });
@@ -196,7 +196,7 @@ addEventListener("execute", async () => {
     console.log({ example });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/data", {
         method: "GET"
     });
@@ -204,7 +204,7 @@ addEventListener("execute", async () => {
     console.log({ data });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/data", {
         method: "PUT",
         body: JSON.stringify({
@@ -215,7 +215,7 @@ addEventListener("execute", async () => {
     console.log({ data });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/view", {
         method: "GET"
     });
@@ -223,7 +223,7 @@ addEventListener("execute", async () => {
     console.log({ view });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/template?id=1", {
         method: "GET"
     });
@@ -231,21 +231,21 @@ addEventListener("execute", async () => {
     console.log({ template });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/500", {
         method: "GET"
     });
     console.log({ 500: response.status === 500 });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/uncaught-error", {
         method: "GET"
     });
     console.log({ uncaughtIs500: response.status === 500 });
 })
 
-addEventListener("execute", async () => {
+addEventListener("test", async () => {
     const response = await fetch("/uncaught-error-inner", {
         method: "GET"
     });

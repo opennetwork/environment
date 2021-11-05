@@ -1,7 +1,8 @@
-import {dispatchEvent, ExecuteEvent, getEnvironment, hasEventListener} from "../environment/environment"
+import {dispatchEvent, ExecuteEvent, hasEventListener} from "../environment/environment"
 import { getRuntimeEnvironment } from "./environment"
 import { runWithSpan } from "../tracing/tracing"
 import { EnvironmentConfig, setEnvironmentConfig } from "../config/config"
+import { hasFlag } from "../flags/flags";
 
 export async function run(config: EnvironmentConfig) {
     const errors: unknown[] = [];
@@ -29,6 +30,14 @@ export async function run(config: EnvironmentConfig) {
                         environment.postConfigure()
                     }
                 })
+
+                if (hasFlag("POST_CONFIGURE_TEST") && await hasEventListener("test")) {
+                    await dispatchEvent({
+                        type: "test",
+                        environment,
+                        parallel: false
+                    });
+                }
 
                 try {
                     const event: ExecuteEvent = {
