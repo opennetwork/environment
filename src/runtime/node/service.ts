@@ -8,8 +8,11 @@ export function getPort(env: string, def?: number) {
 
 export function getEnabledFlags(): string[] {
     const flags = process.env["FLAGS"];
-    if (flags) return flags.split(/[|,:]/).map(value => value.trim()).filter(Boolean);
-    return Object.entries(process.env)
-        .filter(([, value]) => value === "true")
-        .map(([key]) => key);
+    return (flags ? flags.split(/[|,:]/).map(value => value.trim()).filter(Boolean) : [])
+        .concat(getTrueEnv());
+    function getTrueEnv() {
+        return Object.entries(process.env)
+            .filter(([, value]) => value === "true")
+            .map(([key]) => key);
+    }
 }

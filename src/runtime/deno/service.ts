@@ -10,15 +10,19 @@ declare global {
 
 export function getEnabledFlags(): string[] {
     const flags = Deno.env.get("FLAGS");
-    if (flags) return flags.split(/[|,:]/).map(value => value.trim()).filter(Boolean);
-    try {
-        const env = Deno.env.toObject();
-        return Object.entries(env)
-            .filter(([, value]) => value === "true")
-            .map(([key]) => key);
-    } catch {
-        // Cannot access
-        return [];
+    return (flags ? flags.split(/[|,:]/).map(value => value.trim()).filter(Boolean) : [])
+        .concat(getTrueEnv());
+
+    function getTrueEnv() {
+        try {
+            const env = Deno.env.toObject();
+            return Object.entries(env)
+                .filter(([, value]) => value === "true")
+                .map(([key]) => key);
+        } catch {
+            // Cannot access
+            return [];
+        }
     }
 }
 
