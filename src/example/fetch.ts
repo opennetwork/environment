@@ -7,6 +7,7 @@ import {RenderFunction} from "../render/render-function";
 import {h, toString, VNode} from "@virtualstate/fringe";
 import AbortController from "abort-controller";
 import {Environment} from "../environment/environment";
+import {addRequestEventHandler, RequestEventHandlerOptions} from "./event";
 
 function notFound() {
     return new Response("Not Found", {
@@ -30,24 +31,8 @@ function getBody(node: VNode, body: string) {
     return "\n";
 }
 
-function addFetchEventListener(options: { method?: string | RegExp, pathname?: string | RegExp }, fn: ((event: FetchEvent & { url: URL }) => Promise<void> | void)): void {
-    addEventListener("fetch", async (event: FetchEvent) => {
-        const { request: { url, method } } = event;
-        const urlInstance = new URL(url, "https://fetch.spec.whatwg.org");
-        const { pathname } = urlInstance
-        if (options.method && (typeof options.method === "string" ? options.method !== method : !options.method.test(method))) return;
-        if (options.pathname && (typeof options.pathname === "string" ? options.pathname !== pathname : !options.pathname.test(pathname))) return;
-        addUrl(event);
-        return fn(event);
-        function addUrl(event: FetchEvent): asserts event is FetchEvent & { url: URL } {
-            Object.defineProperty(event, "url", {
-                value: urlInstance,
-                writable: true,
-                configurable: true,
-                enumerable: true
-            });
-        }
-    })
+function addFetchEventListener(options: RequestEventHandlerOptions, fn: ((event: FetchEvent & { url: URL }) => Promise<void> | void)): void {
+    addRequestEventHandler("fetch", options, fn);
 }
 
 addFetchEventListener({ method: "PUT", pathname: /^\/(data|browser-data|template-data)$/ }, async ({ request }) => {
