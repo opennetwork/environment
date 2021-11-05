@@ -31,7 +31,13 @@ export async function fetch(url: string, init?: RequestInit): Promise<AnyRespons
       request,
       type
     });
-    return response;
+    try {
+        return await response;
+    } catch (error) {
+        return new AnyResponse(`${error}`, {
+            status: 500
+        });
+    }
 }
 
 export interface FetchEventInit<T extends string> {

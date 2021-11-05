@@ -138,7 +138,6 @@ export async function start(): Promise<void> {
         // global error process with Node.js
         // https://nodejs.org/api/process.html#event-unhandledrejection
         void runWithSpan("request", { attributes }, run).catch(async error => {
-            console.log("beforehand", { error });
             traceError(error)
             let errorHandled = false;
             if (await hasEventListener("fetch-error")) {
@@ -156,7 +155,6 @@ export async function start(): Promise<void> {
                 });
                 errorHandled = true;
             }
-            console.log({ errorHandled });
             try {
                 response.writeHead(500);
                 response.end();

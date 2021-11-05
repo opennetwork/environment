@@ -30,60 +30,90 @@ function getBody(node: VNode, body: string) {
     return "\n";
 }
 
-async function getResponseForGET(request: Request): Promise<Response> {
-    const { url } = request;
-    const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
-    const environment = getEnvironment();
-    if (pathname === "/view" || pathname === "/template") {
-        const controller = new AbortController();
-        const { resolve: render, promise } = defer<RenderFunction | VNode>();
-        const eventPromise = dispatchEvent({
-            type: "render",
-            render,
-            signal: controller.signal,
-            request,
-            environment
-        }).catch(() => void 0 /* TODO */);
-        const node = await promise;
-        const view = h(node, { request, signal: controller.signal });
-        // for await (const stringIteration of toString.call({ isScalar, getBody }, view)) {
-        //     console.log({ stringIteration });
-        // }
-        const string = await toString.call({ isScalar, getBody }, view);
-        // Abort after toString is completed to terminate all
-        controller.abort();
-        await eventPromise;
-        return new Response(
-            `${pathname.includes("template") ? "" : "<!DOCTYPE html>\n"}${string}`, {
-            status: 200,
-            headers: {
-                "Content-Type": "text/html"
-            }
-        });
-    }
-    if (pathname === "/ping") {
-        return new Response("Pong", {
+function addFetchEventListener(options: { method?: string | RegExp, pathname?: string | RegExp }, fn: ((event: FetchEvent & { url: URL }) => Promise<void> | void)): void {
+    addEventListener("fetch", async (event: FetchEvent) => {
+        const { request: { url, method } } = event;
+        const urlInstance = new URL(url, "https://fetch.spec.whatwg.org");
+        const { pathname } = urlInstance
+        if (options.method && (typeof options.method === "string" ? options.method !== method : !options.method.test(method))) return;
+        if (options.pathname && (typeof options.pathname === "string" ? options.pathname !== pathname : !options.pathname.test(pathname))) return;
+        addUrl(event);
+        return fn(event);
+        function addUrl(event: FetchEvent): asserts event is FetchEvent & { url: URL } {
+            Object.defineProperty(event, "url", {
+                value: urlInstance,
+                writable: true,
+                configurable: true,
+                enumerable: true
+            });
+        }
+    })
+}
+
+addFetchEventListener({ method: "PUT", pathname: /^\/(data|browser-data|template-data)$/ }, async ({ request }) => {
+    console.log({ body: await request.json() });
+});
+
+addFetchEventListener({ method: "GET", pathname: /^\/(view|template)$/ }, async ({ respondWith, request, environment, url: { pathname } }) => {
+    const controller = new AbortController();
+    const { resolve: render, promise } = defer<RenderFunction | VNode>();
+    const eventPromise = dispatchEvent({
+        type: "render",
+        render,
+        signal: controller.signal,
+        request,
+        environment
+    }).catch(() => void 0 /* TODO */);
+    const node = await promise;
+    const view = h(node, { request, signal: controller.signal });
+    // for await (const stringIteration of toString.call({ isScalar, getBody }, view)) {
+    //     console.log({ stringIteration });
+    // }
+    const string = await toString.call({ isScalar, getBody }, view);
+    // Abort after toString is completed to terminate all
+    controller.abort();
+    await eventPromise;
+    respondWith(new Response(
+    `${pathname.includes("template") ? "" : "<!DOCTYPE html>\n"}${string}`, {
+        status: 200,
+        headers: {
+            "Content-Type": "text/html"
+        }
+    }));
+});
+
+addFetchEventListener({ method: "GET", pathname: "/ping" }, ({ respondWith }) => respondWith(
+    new Response("Pong", {
             status: 200
-        });
-    }
-    if (pathname === "/pong") {
-        return new Response("Ping", {
+        }
+    )
+));
+
+addFetchEventListener({ method: "GET", pathname: "/pong" }, ({ respondWith }) => respondWith(
+    new Response("Ping", {
             status: 200
-        });
-    }
-    if (pathname === "/hello") {
-        return new Response("World", {
+        }
+    )
+));
+
+addFetchEventListener({ method: "GET", pathname: "/hello" }, ({ respondWith }) => respondWith(
+    new Response("World", {
             status: 200
-        });
-    }
-    if (pathname === "/data" || pathname === "/browser-data" || pathname === "/template-data") {
-        return new Response(JSON.stringify({
+        }
+    )
+));
+
+addFetchEventListener({ method: /(GET|PUT)/, pathname: /^\/(data|browser-data|template-data)$/ }, ({ respondWith, url: { pathname } }) => {
+    respondWith(
+        new Response(JSON.stringify({
             data: "value!",
             pathname
-        }), { status: 200 });
-    }
-    if (pathname === "/browser-script") {
-        return new Response(`
+        }), { status: 200 })
+    )
+});
+
+addFetchEventListener({ method: "GET", pathname: "/browser-script" }, ({ respondWith }) => respondWith(
+    new Response(`
         const response = await fetch("/browser-data");
         window.initialData = window.data;
         window.data = window.fetchedData = await response.json();
@@ -93,14 +123,15 @@ async function getResponseForGET(request: Request): Promise<Response> {
             data: window.data
         });
         `, {
-            status: 200,
-            headers: {
-                "Content-Type": "application/javascript"
-            }
-        })
-    }
-    if (pathname === "/template-script") {
-        return new Response(`
+        status: 200,
+        headers: {
+            "Content-Type": "application/javascript"
+        }
+    })
+));
+
+addFetchEventListener({ method: "GET", pathname: "/template-script" }, ({ respondWith }) => respondWith(
+    new Response(`
         const response = await fetch("/template-data");
         window.initialTemplateData = window.data;
         window.data = window.fetchedTemplateData = await response.json();
@@ -112,41 +143,27 @@ async function getResponseForGET(request: Request): Promise<Response> {
             data: window.data
         });
         `, {
-            status: 200,
-            headers: {
-                "Content-Type": "application/javascript"
-            }
-        })
-    }
-    if (/^\/\d{3}$/.test(pathname)) {
-        return new Response("", {
-            status: +pathname.substr(1)
-        })
-    }
-    if (pathname === "/uncaught-error-inner") {
-        throw new Error("Externally triggered uncaught inner error");
-    }
-    return notFound();
-}
+        status: 200,
+        headers: {
+            "Content-Type": "application/javascript"
+        }
+    })
+));
 
-addEventListener("fetch", async ({ request }) => {
-    const { pathname } = new URL(request.url, 'http://localhost');
-    if (pathname === "/uncaught-error") {
-        throw new Error("Externally triggered uncaught error");
-    }
+addFetchEventListener({ pathname: /^\/\d{3}$/ }, ({ respondWith, url: { pathname }}) => respondWith(
+    new Response("", {
+        status: +pathname.substr(1)
+    })
+))
+
+addFetchEventListener({ pathname: "/uncaught-error-inner" }, ({ respondWith }) => {
+    respondWith(Promise.resolve().then(async () => {
+        throw new Error("Externally triggered uncaught inner error")
+    }));
 });
 
-addEventListener("fetch", async ({ respondWith, request }) => {
-    if (!["POST", "PUT"].includes(request.method)) return;
-    const { pathname } = new URL(request.url, 'http://localhost');
-    if (pathname !== '/data') return;
-    console.log({ body: await request.json() });
-    return respondWith(await getResponseForGET(request));
-});
-
-addEventListener("fetch", async ({ respondWith, request }) => {
-    if (!["GET", "PUT"].includes(request.method)) return;
-    respondWith(await getResponseForGET(request));
+addFetchEventListener({ pathname: "/uncaught-error" }, () => {
+    throw new Error("Externally triggered uncaught error")
 });
 
 addEventListener("fetch", async ({ respondWith }) => {

@@ -1,9 +1,8 @@
 import { addEventListener } from "../environment/environment";
 
-addEventListener("fetch-error", async ({ error, ...rest }) => {
-    console.trace({ fetchErrorCaught: error, ...rest })
+addEventListener("fetch-error", async ({ error }) => {
+    // console.log({ fetchErrorCaught: error })
 });
-addEventListener("error", async ({ error, ...rest }) => {
-    console.trace({ globalErrorCaught: error, ...rest })
-    throw "huh";
+addEventListener("error", async ({ error }) => {
+    console.log({ globalErrorCaught: error })
 });
