@@ -3,7 +3,7 @@ import { createServer, IncomingMessage, ServerResponse } from "http"
 import {
     dispatchEvent,
     addEventListener,
-    hasEventListener
+    hasEventListener, getEnvironment
 } from "../../environment/environment"
 import { fromRequest, sendResponse } from "@opennetwork/http-representation-node"
 import { Request, Response } from "@opennetwork/http-representation"
@@ -160,7 +160,7 @@ export async function start(): Promise<void> {
         async function run() {
             const counter = getBoundCounter(httpRequest.url);
             counter?.add(1);
-            const environment = await getRuntimeEnvironment()
+            const environment = await getEnvironment();
             const controller = new AbortController()
             environment.addAbortController(controller)
             request.on("abort", () => controller.abort());
@@ -169,7 +169,7 @@ export async function start(): Promise<void> {
                 request: httpRequest,
                 abortTimeout,
                 signal: controller.signal,
-                type: "fetch"
+                type: "fetch",
             });
             try {
                 const httpResponse = await responsePromise;

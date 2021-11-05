@@ -1,10 +1,11 @@
-import { Environment, getEnvironment, dispatchEvent } from "../environment/environment"
+import {Environment, getEnvironment, dispatchEvent, ExecuteEvent} from "../environment/environment"
 import { Event } from "../events/events"
 
 declare global {
 
     interface EnvironmentConfig {
-
+        environment?: Environment;
+        execute?(event: ExecuteEvent): void | Promise<void>
     }
 
 }
@@ -43,12 +44,10 @@ export async function setEnvironmentConfig(environmentConfig: EnvironmentConfig)
     if (!environment) {
         throw new Error("Environment required to use EnvironmentConfig")
     }
-    // TODO deep freeze
-    const frozen = Object.freeze(environmentConfig)
-    config.set(environment, frozen)
+    config.set(environment, environmentConfig)
     const event: ConfigUpdateEvent = {
         type: "config:update",
-        config: frozen
+        config: environmentConfig
     }
     await dispatchEvent(event)
 }

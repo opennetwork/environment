@@ -4,37 +4,38 @@ import {isRunning as isRunningNode} from "./node/is-running"
 import {isRunning as isRunningAWSLambda} from "./aws-lambda/is-running"
 import {isRunning as isRunningBrowser} from "./browser/is-running"
 import {isRunning as isRunningReactNative} from "./react-native/is-running"
-import {isRunning as isRunningDenoDeploy} from "./deno-deploy/is-running"
+import {isRunning as isRunningDeno} from "./deno/is-running"
+import {getEnv} from "@virtualstate/examples/lib/log.util";
 
 export interface EnvironmentRuntimeDetail {
     getEnvironment?(): Environment | undefined
     environment: Environment
 }
 
-async function getRuntimeEnvironmentDetail(): Promise<EnvironmentRuntimeDetail> {
+export async function getRuntimeEnvironmentDetail(config: EnvironmentConfig): Promise<EnvironmentRuntimeDetail> {
     if (isRunningCloudflare()) {
         const { Environment } = await import("./cloudflare/cloudflare")
         return {
             getEnvironment: Environment.getEnvironment,
             environment: new Environment()
         }
-    } else if (isRunningDenoDeploy()) {
-        const { Environment } = await import("./deno-deploy/deno-deploy")
+    } else if (isRunningDeno()) {
+        const { Environment } = await import("./deno/deno")
         return {
             getEnvironment: Environment.getEnvironment,
             environment: new Environment()
         }
     } else if (isRunningNode()) {
-        if (isRunningAWSLambda()) {
+        if (isRunningAWSLambda(config)) {
             const { Environment } = await import("./aws-lambda/aws-lambda")
             return {
-                getEnvironment: Environment.getEnvironment,
+                getEnvironment: undefined,
                 environment: new Environment()
             }
         } else {
             const { Environment } = await import("./node/node")
             return {
-                getEnvironment: Environment.getEnvironment,
+                getEnvironment: undefined,
                 environment: new Environment()
             }
         }
@@ -54,16 +55,14 @@ async function getRuntimeEnvironmentDetail(): Promise<EnvironmentRuntimeDetail> 
     throw new Error("Unknown environment")
 }
 
-export async function getRuntimeEnvironment(): Promise<Environment> {
-    const { environment, getEnvironment: getEnvironmentFn } = await getRuntimeEnvironmentDetail()
+export async function getRuntimeEnvironment(config: EnvironmentConfig): Promise<Environment> {
+    const { environment, getEnvironment: getEnvironmentFn } = await getRuntimeEnvironmentDetail(config)
     const currentEnvironment = getEnvironment()
 
     if (currentEnvironment) {
         currentEnvironment.addEnvironment(environment)
-    }
-
-    if (!currentEnvironment && getEnvironmentFn) {
-        setEnvironment(getEnvironmentFn)
+    } else if (getEnvironmentFn) {
+        setEnvironment(getEnvironmentFn);
     }
 
     return environment

@@ -5,42 +5,45 @@ export interface SyncLocalStorage<T> {
 }
 
 export interface LocalStorage<T> {
-    run(value: T, callback: () => void | Promise<void>): Promise<void>
-    enterWith(value: T): Promise<void>
+    run<Z>(value: T, callback: () => Z | Promise<Z>): Promise<Z>
+    enterWith(value: T): void
     getStore(): T | undefined
 }
 
-export function createLocalStorage<T = unknown>(): LocalStorage<T> {
-    let sync: SyncLocalStorage<T> | undefined
+const AsyncLocalStorageModule = await import("async_hooks").catch(() => undefined);
 
-    async function getSyncLocalStorage() {
-        if (sync) {
-            return sync
+function createGlobalLocalStorage<T>(): SyncLocalStorage<T> {
+    let globalValue: T;
+    return {
+        run(value, callback) {
+            globalValue = value;
+            callback();
+        },
+        getStore() {
+            return globalValue;
+        },
+        enterWith(value): void {
+            globalValue = value;
         }
-        try {
-            const { AsyncLocalStorage } = await import("async_hooks")
-            sync = new AsyncLocalStorage()
-            return sync
-        } catch {
-            sync = {
-                run(value, callback) {
-                    callback()
-                },
-                getStore() {
-                    return undefined
-                },
-                enterWith(value): void {
-                }
-            }
-            return sync
+    };
+}
+
+export function createLocalStorage<T = unknown>(): LocalStorage<T> {
+    let instance: SyncLocalStorage<T> | undefined
+
+    function getLocalStorageInstance(): SyncLocalStorage<T> {
+        if (!AsyncLocalStorageModule || instance) {
+            instance = instance ?? createGlobalLocalStorage();
+            return instance;
         }
+        return instance = new AsyncLocalStorageModule.AsyncLocalStorage();
     }
 
     return {
-        async run(value, callback) {
-            const sync = await getSyncLocalStorage()
-            return new Promise<void>(
-                (resolve, reject) => sync.run(
+        async run<Z>(value: T, callback: () => Z | Promise<Z>): Promise<Z> {
+            const instance = getLocalStorageInstance();
+            return new Promise<Z>(
+                (resolve, reject) => instance.run(
                     value,
                     () => Promise.resolve()
                         .then(() => callback())
@@ -50,14 +53,14 @@ export function createLocalStorage<T = unknown>(): LocalStorage<T> {
             )
         },
         getStore(): T | undefined {
-            // If sync has never been accessed we do not yet have a value
-            if (!sync) {
-                return
+            // If instance has never been accessed we do not yet have a value
+            if (!instance) {
+                return undefined;
             }
-            return sync.getStore()
+            return getLocalStorageInstance().getStore()
         },
-        async enterWith(value: T) {
-            const sync = await getSyncLocalStorage()
+        enterWith(value: T) {
+            const sync = getLocalStorageInstance()
             sync.enterWith(value)
         }
     }

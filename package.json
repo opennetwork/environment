@@ -51,6 +51,7 @@
     "@opentelemetry/metrics": "^0.24.0",
     "@opentelemetry/sdk-node": "^0.26.0",
     "@opentelemetry/tracing": "^0.24.0",
+    "@types/aws-lambda": "^8.10.85",
     "@virtualstate/astro-renderer": "^2.25.4",
     "@virtualstate/dom": "^2.25.4",
     "@virtualstate/examples": "^2.25.4",

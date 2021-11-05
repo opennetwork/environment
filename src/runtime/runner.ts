@@ -1,20 +1,19 @@
-import {dispatchEvent, getEnvironment, setEnvironment} from "../environment/environment"
+import {dispatchEvent, ExecuteEvent, getEnvironment} from "../environment/environment"
 import { getRuntimeEnvironment } from "./environment"
 import { runWithSpan } from "../tracing/tracing"
 import { EnvironmentConfig, setEnvironmentConfig } from "../config/config"
 
 export async function run(config: EnvironmentConfig) {
     try {
-        const environment = await getRuntimeEnvironment()
-
+        const environment = await getRuntimeEnvironment(config)
         await environment.runInAsyncScope(async () => {
+            await setEnvironmentConfig(config)
 
             await runWithSpan("environment", { attributes: { name: environment.name } }, async () => {
 
                 await runWithSpan("environment_configure", {}, async () => {
                     if (environment.configure) {
                         environment.configure()
-                        await setEnvironmentConfig(config)
                     }
                 })
 
@@ -31,11 +30,15 @@ export async function run(config: EnvironmentConfig) {
                 })
 
                 try {
-                    await dispatchEvent({
+                    const event: ExecuteEvent = {
                         type: "execute",
                         environment,
                         parallel: false
-                    })
+                    };
+                    await dispatchEvent(event);
+                    if (config.execute) {
+                        await config.execute(event);
+                    }
                     await runWithSpan("environment_wait_for_services", {}, () => environment.waitForServices())
                 } catch (error) {
                     console.error({ error })

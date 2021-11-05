@@ -3,6 +3,8 @@ import { EnvironmentEventTarget } from "./events"
 import { error as traceError } from "../tracing/tracing"
 import { EnvironmentEvents } from "../events/events"
 import { AbortController, isAbortController } from "../events/events"
+import {getEnv} from "@virtualstate/examples/lib/log.util";
+import {createLocalStorage} from "../local-storage";
 
 export * from "./events"
 export * from "./context"
@@ -41,7 +43,7 @@ export class Environment extends EnvironmentEventTarget implements Environment {
     }
 
     async runInAsyncScope(fn: () => void | Promise<void>): Promise<void> {
-        await fn()
+        await runInEnvironment(this, fn);
     }
 
     addEnvironment(environment: Environment): void {
@@ -131,39 +133,49 @@ export class Environment extends EnvironmentEventTarget implements Environment {
 
 }
 
-const defaultEventTarget = new EventTarget()
+const localStorage = createLocalStorage<() => Environment | undefined>();
+
+const topLevelEnvironment = new Environment("top")
+const defaultEventTarget = topLevelEnvironment;
 
 export function addEventListener<Type extends (keyof EnvironmentEvents & string)>(type: Type, callback: EventCallback<EnvironmentEvents[Type] & Event<Type>>): void
 export function addEventListener<E extends Event, This = unknown>(type: E["type"], callback: EventCallback<E, This>): void
 export function addEventListener(type: string, callback: EventCallback): void
 export function addEventListener(type: string, callback: EventCallback<any>): void {
-    defaultEventTarget.addEventListener(type, callback)
+    getEnvironment().addEventListener(type, callback)
 }
 
 export function removeEventListener(type: string, callback: Function) {
     defaultEventTarget.removeEventListener(type, callback)
+    getEnvironment().removeEventListener(type, callback);
 }
 
 export async function dispatchEvent<Type extends (keyof EnvironmentEvents & string)>(event: EnvironmentEvents[Type] & Event<Type>): Promise<void> {
-    await defaultEventTarget.dispatchEvent(event)
-}
-
-export async function hasEventListener(type: string, callback?: Function) {
-    return defaultEventTarget.hasEventListener(type, callback)
-}
-
-let getEnvironmentFn: (() => Environment | undefined) | undefined
-const topLevelEnvironment = new Environment("top")
-export function getEnvironment() {
-    return get() || topLevelEnvironment
-
-    function get() {
-        if (getEnvironmentFn) {
-            return getEnvironmentFn()
-        }
+    const environment = getEnvironment();
+    if (await environment.hasEventListener(event.type)) {
+        return environment.dispatchEvent(event);
+    } else {
+        return defaultEventTarget.dispatchEvent(event);
     }
 }
 
+export async function hasEventListener(type: string, callback?: Function) {
+    const [defaultHas, environmentHas] = await Promise.all([
+        defaultEventTarget.hasEventListener(type, callback),
+        getEnvironment().hasEventListener(type, callback)
+    ])
+    return defaultHas || environmentHas;
+}
+
+export function getEnvironment() {
+    const fn = localStorage.getStore();
+    return fn?.() || topLevelEnvironment;
+}
+
 export function setEnvironment(fn: () => Environment | undefined) {
-    getEnvironmentFn = fn
+    localStorage.enterWith(fn);
+}
+
+export async function runInEnvironment<T>(environment: Environment, fn: () => Promise<T> | T): Promise<T> {
+    return localStorage.run(() => environment, fn);
 }

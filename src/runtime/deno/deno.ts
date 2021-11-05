@@ -6,7 +6,7 @@ let instances = 0
 
 export class Environment extends EnvironmentTemplate {
 
-    constructor(name: string = "deno-deploy") {
+    constructor(name: string = "deno") {
         super(name)
         if (!instance) {
             instance = this
@@ -20,7 +20,7 @@ export class Environment extends EnvironmentTemplate {
 
     static getEnvironment() {
         if (instances > 1) {
-            console.log("Multiple environments created for this deno-deploy process")
+            console.log("Multiple environments created for this deno process")
         }
         return instance
     }

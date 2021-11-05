@@ -1,9 +1,6 @@
-import { Environment as EnvironmentTemplate } from "../../environment/environment"
+import {Environment as EnvironmentTemplate, getEnvironment, runInEnvironment} from "../../environment/environment"
 import { start as startFetchService } from "./fetch-service"
-import { createLocalStorage } from "../../local-storage"
 import { createFlag, setFlag } from "../../flags/flags"
-
-const localStorage = createLocalStorage<Environment>()
 
 export class Environment extends EnvironmentTemplate {
 
@@ -11,12 +8,8 @@ export class Environment extends EnvironmentTemplate {
         super(name)
     }
 
-    async runInAsyncScope(fn: () => void | Promise<void>) {
-        return localStorage.run(this, fn)
-    }
-
-    static getEnvironment(): Environment | undefined {
-        return localStorage.getStore()
+    async runInAsyncScope(fn: () => void | Promise<void>): Promise<void> {
+        return runInEnvironment(this, fn);
     }
 
     async configure() {
@@ -27,6 +20,7 @@ export class Environment extends EnvironmentTemplate {
     }
 
     async postConfigure() {
+        console.log({ post: getEnvironment() });
         this.addService(startFetchService())
     }
 

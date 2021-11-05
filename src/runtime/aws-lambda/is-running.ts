@@ -1,5 +1,5 @@
 import { isRunning as isRunningNode } from "../node/is-running"
 
-export function isRunning() {
-    return isRunningNode() && process.env.LAMBDA_ENV === "true"
+export function isRunning(config: EnvironmentConfig) {
+    return isRunningNode() && config.AWS_LAMBDA;
 }

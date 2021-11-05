@@ -9,6 +9,7 @@ import { runWithSpanOptional, trace } from "../../tracing/span"
 import { isParallelEvent } from "../parallel-event"
 import { isSignalEvent } from "../signal-event"
 import { isAbortError } from "../../errors/errors"
+import {getEnv} from "@virtualstate/examples/lib/log.util";
 
 export {
     EventCallback
@@ -87,8 +88,16 @@ export class EventTarget implements EventTarget {
                 return
             }
 
+            function isEnvironmentIsh(environment: unknown): environment is Pick<Environment, "runInAsyncScope"> {
+                function isEnvironmentLike(environment: unknown): environment is { runInAsyncScope: unknown } {
+                    return !!environment;
+                }
+                return isEnvironmentLike(environment) && typeof environment.runInAsyncScope === "function";
+            }
+
             const parentEvent = getEvent()
-            const environment = this.#environment || getEnvironment()
+            const eventEnvironment = event.environment;
+            const environment = isEnvironmentIsh(eventEnvironment) ? eventEnvironment : this.#environment || getEnvironment()
 
             if (environment && hasEventContext(event)) {
                 // TODO decide if we should just do this anyway, it might lead to some confusing things happening so I think it is better to straight up disallow it

@@ -1,4 +1,4 @@
-import {addEventListener, dispatchEvent} from "../environment/environment";
+import {addEventListener, dispatchEvent, getEnvironment} from "../environment/environment";
 import { Response, Request } from "@opennetwork/http-representation";
 import { dispatchFetchEvent, fetch} from "../fetch/fetch";
 import {FetchEvent} from "../fetch/event";
@@ -6,6 +6,7 @@ import {defer} from "../deferred";
 import {RenderFunction} from "../render/render-function";
 import {h, toString, VNode} from "@virtualstate/fringe";
 import AbortController from "abort-controller";
+import {Environment} from "../environment/environment";
 
 function notFound() {
     return new Response("Not Found", {
@@ -32,6 +33,7 @@ function getBody(node: VNode, body: string) {
 async function getResponseForGET(request: Request): Promise<Response> {
     const { url } = request;
     const { pathname } = new URL(url, "https://fetch.spec.whatwg.org");
+    const environment = getEnvironment();
     if (pathname === "/view" || pathname === "/template") {
         const controller = new AbortController();
         const { resolve: render, promise } = defer<RenderFunction | VNode>();
@@ -39,7 +41,8 @@ async function getResponseForGET(request: Request): Promise<Response> {
             type: "render",
             render,
             signal: controller.signal,
-            request
+            request,
+            environment
         }).catch(() => void 0 /* TODO */);
         const node = await promise;
         const view = h(node, { request, signal: controller.signal });
