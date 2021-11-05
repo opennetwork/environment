@@ -8,16 +8,36 @@ export interface RequestEventHandlerOptions {
 }
 
 
-function addUrl<O extends object, T extends URL>(event: O, url: T): asserts event is O & { url: T } {
+export function isUrlEvent<O extends object>(event: O): event is O & { url: URL } {
+    function isUrlEventLike(event: unknown): event is O & { url: unknown } {
+        return !!event;
+    }
+    return isUrlEventLike(event) && event.url instanceof URL;
+}
+
+export function assertOrDefineRequestEventUrl<O extends object, T extends URL>(event: O, url: T): asserts event is O & { url: T } {
+    if (isUrlEvent(event)) {
+        if (url.toString() !== url.toString()) {
+            throw new Error("url found already on event, but it does not match the provided url");
+        }
+        return;
+    }
     Object.defineProperty(event, "url", {
         value: url,
         writable: true,
         configurable: true,
         enumerable: true
     });
+    assertRequestEventUrl(event);
 }
 
-export function addRequestEventHandler<T extends "fetch" | "render", E extends Event<T>>(type: T, options: RequestEventHandlerOptions, fn: ((event: E) => Promise<void> | void)): void {
+export function assertRequestEventUrl<O extends object>(event: O): asserts event is O & { url: URL } {
+    if (!isUrlEvent(event)) {
+        throw new Error("Expected url");
+    }
+}
+
+export function addRequestEventHandler<T extends string, E extends Event<T>>(type: T, options: RequestEventHandlerOptions, fn: ((event: E) => Promise<void> | void)): void {
     addEventListener(type, async (event: E) => {
         const request = event.request;
         assertRequest(request);
@@ -26,7 +46,7 @@ export function addRequestEventHandler<T extends "fetch" | "render", E extends E
         const { pathname } = urlInstance
         if (options.method && (typeof options.method === "string" ? options.method !== method : !options.method.test(method))) return;
         if (options.pathname && (typeof options.pathname === "string" ? options.pathname !== pathname : !options.pathname.test(pathname))) return;
-        addUrl(event, urlInstance);
+        assertOrDefineRequestEventUrl(event, urlInstance);
         return fn(event);
     })
 }

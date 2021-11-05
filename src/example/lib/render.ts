@@ -1,5 +1,3 @@
-import {RenderEvent} from "../../render/render";
-import {addRequestEventHandler} from "../event";
 import {h, toString as toStringCore, VNode} from "@virtualstate/fringe";
 import {addFetchEventListener} from "./fetch";
 import AbortController from "abort-controller";
@@ -7,7 +5,8 @@ import {defer} from "../../deferred";
 import {RenderFunction} from "../../render/render-function";
 import {dispatchEvent} from "../../environment/environment";
 import {Response} from "@opennetwork/http-representation";
-import {RequestEventHandlerOptions} from "./request";
+import {addRequestEventHandler, RequestEventHandlerOptions} from "./request";
+import {RenderEvent} from "../../render/render";
 
 export function addRenderEventListener(options: RequestEventHandlerOptions, fn: ((event: RenderEvent & { url: URL }) => Promise<void> | void)): void {
     addRequestEventHandler("render", options, fn);

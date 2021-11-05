@@ -1,12 +1,6 @@
 import {h, createFragment, VNode} from "@virtualstate/fringe";
-import {addEventListener} from "../environment/environment";
 import {fetch} from "../fetch/fetch";
-import {Request} from "@opennetwork/http-representation";
 import {v4} from "uuid";
-import {getEvent} from "../events/event/dispatcher";
-import {FetchEvent} from "../fetch/event";
-import {RenderEvent} from "../render/render";
-import {addRequestEventHandler} from "./event";
 import {addRenderEventListener} from "./lib";
 
 async function Layout({ title, script, class: mainClass, id }: Record<string, unknown>, child: VNode) {
