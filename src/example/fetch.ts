@@ -59,7 +59,7 @@ addFetchEventListener({ method: "GET", pathname: /^\/(view|template)$/ }, async 
     controller.abort();
     await eventPromise;
     respondWith(new Response(
-    `${pathname.includes("template") ? "" : "<!DOCTYPE html>\n"}${string}`, {
+    `${string.startsWith("<html") ? "<!DOCTYPE html>\n" : ""}${string}`, {
         status: 200,
         headers: {
             "Content-Type": "text/html"
