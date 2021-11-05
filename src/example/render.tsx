@@ -16,7 +16,7 @@ async function Layout({ title, script, class: mainClass, id }: Record<string, un
     return (
         <>
             <h1>{title ?? "Hello"}</h1>
-            <main class={`${id}-main ${mainClass}`}>
+            <main class={`${id}-main ${mainClass ?? ""}`.trim()}>
                 {child ?? (
                     <>
                         <p>Content loading</p>
@@ -43,7 +43,7 @@ function addRenderEventListener(options: { method?: string | RegExp, pathname?: 
 addRenderEventListener({ method: "GET", pathname: "/template" }, ({ render, url }) => {
     const id = getId(url);
     return render(
-        <template id={`template-${id}`}>
+        <template id={`template-${id}`} mount pathname={url.pathname}>
             <Layout
                 id={id}
                 title={`In Template ${id}!`}
@@ -64,51 +64,69 @@ addRenderEventListener({ method: "GET" }, ({ render, url }) => {
     const id = getId(url);
     return render(
         <html>
-            <head>
-                <title>My Website</title>
-            </head>
-            <body>
-            <Layout
-                id={id}
-                script={
-                    <>
-                        <script type="module">
-                            {`
-    window.data = JSON.parse(
-        document.querySelector("script#data").textContent
-    );
+        <head>
+            <title>My Website</title>
+        </head>
+        <body>
+        <Layout
+            id={id}
+            script={
+                <>
+                    <script type="module">
+                        {`
+window.data = JSON.parse(
+    document.querySelector("script#data").textContent
+);
     `}
-                        </script>
-                        <script type="module">
-                            {`
-    const response = await fetch("/template?id=${id}");
-    const templateHTML = await response.text();
-    const templateRoot = document.createElement("div");
-    templateRoot.innerHTML = templateHTML;
-    const template = templateRoot.querySelector("template");
-    if (template) {
-        const imports = getImports(template.content);
-        const existing = getImports(document);
-        const remaining = imports.filter(src => !existing.includes(src));
-        template.content.querySelectorAll("script[src]").forEach(element => element.remove());
-        const nextBody = document.createElement("body");
-        nextBody.replaceChildren(...Array.from(template.content.children));
-        document.body.replaceWith(nextBody);
-        await Promise.all(imports.map(src => import(src)));
+                    </script>
+                    <script type="module">
+                        {`
+function getImports(root) {
+    const scripts = Array.from(root.querySelectorAll("script[type=module][src]"));
+    return scripts.map(script => script.getAttribute("src"));
+}
+                    
+async function replaceBodyWithTemplate(template) {
+    const imports = getImports(template.content);
+    // Remove all scripts that were included, modules can be imported dynamically,
+    // which will happen after the template replaces the body
+    template.content.querySelectorAll("script").forEach(element => element.remove());
+    const nextBody = document.createElement("body");
+    nextBody.append(document.importNode(template.content, true))
+    document.body.replaceWith(nextBody);
+    if (template.hasAttribute("mount")) {
+      document.head.append(template);
     }
-    
-    function getImports(root) {
-        const scripts = Array.from(root.querySelectorAll("script[type=module][src]"));
-        return scripts.map(script => script.getAttribute("src"));
+    await Promise.all(imports.map(src => import(src)));
+}
+
+async function fetchTemplate(url) {
+  const { pathname } = new URL(url, location.origin);
+  const existingTemplate = document.querySelector(\`template[pathname="\${pathname}"]\`);
+  if (existingTemplate) return replaceBodyWithTemplate(existingTemplate);
+  const response = await fetch(url, {
+    headers: {
+        Accept: "text/html"
     }
-                                    `.trim()}
-                        </script>
-                        <script type="module" src="/browser-script">
-                        </script>
-                    </>
-                }
-            />
-            </body>
+  });
+  const templateHTML = await response.text();
+  const templateRoot = document.createElement("div");
+  templateRoot.innerHTML = templateHTML;
+  const template = templateRoot.querySelector("template");
+  if (template) {
+    await replaceBodyWithTemplate(template);
+  }
+} 
+
+await fetchTemplate("/template?id=${id}");
+                                    `}
+                    </script>
+                    <script type="module" src="/browser-script">
+                    </script>
+                </>
+            }
+        />
+        </body>
         </html>
     )
 });
