@@ -91,7 +91,9 @@ addRenderEventListener({ method: "GET" }, ({ render, url }) => {
         const existing = getImports(document);
         const remaining = imports.filter(src => !existing.includes(src));
         template.content.querySelectorAll("script[src]").forEach(element => element.remove());
-        document.body.replaceChildren(...Array.from(template.content.children));
+        const nextBody = document.createElement("body");
+        nextBody.replaceChildren(...Array.from(template.content.children));
+        document.body.replaceWith(nextBody);
         await Promise.all(imports.map(src => import(src)));
     }
     
