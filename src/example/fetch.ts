@@ -1,7 +1,9 @@
 import {addEventListener, dispatchEvent} from "../environment/environment";
 import { Response } from "@opennetwork/http-representation";
 import { fetch} from "../fetch/fetch";
-import {addFetchEventListener, addRenderFetchEventListener} from "./lib";
+import {addFetchEventListener, addRenderEventListener, addRenderFetchEventListener} from "./lib";
+import {getStore} from "../storage/store/store";
+import {v4} from "uuid";
 
 function notFound() {
     return new Response("Not Found", {

@@ -26,7 +26,7 @@ export async function fetch(url: string, init?: RequestInit): Promise<AnyRespons
         }
         throw new Error("Not Implemented");
     }
-    const request = new Request(new URL(url, 'internal://localhost').toString(), init);
+    const request = new Request(new URL(url, 'https://fetch.spec.whatwg.org').toString(), init);
     const [, response] = await dispatchFetchEvent({
       request,
       type

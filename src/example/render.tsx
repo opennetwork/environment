@@ -2,6 +2,7 @@ import {h, createFragment, VNode} from "@virtualstate/fringe";
 import {fetch} from "../fetch/fetch";
 import {v4} from "uuid";
 import {addRenderEventListener} from "./lib";
+import {getStore} from "../storage/store/store";
 
 async function Layout({ title, script, class: mainClass, id }: Record<string, unknown>, child: VNode) {
     const response = await fetch("/data", {
@@ -31,8 +32,10 @@ function getId({ searchParams }: URL) {
     return /^[a-z0-9-_+]+$/.test(searchParams.get("id") ?? "") ? searchParams.get("id") : v4();
 }
 
-addRenderEventListener({ method: "GET", pathname: "/template" }, ({ render, url }) => {
+addRenderEventListener({ method: "GET", pathname: "/template" }, async ({ render, url }) => {
     const id = getId(url);
+    const store = getStore();
+    await store.set(`templated:${id}`, 1);
     return render(
         <template id={`template-${id}`} mount pathname={url.pathname}>
             <Layout
@@ -51,7 +54,7 @@ addRenderEventListener({ method: "GET", pathname: "/template" }, ({ render, url 
     )
 })
 
-addRenderEventListener({ method: "GET" }, ({ render, url }) => {
+addRenderEventListener({ method: "GET", pathname: "/view" }, ({ render, url }) => {
     const id = getId(url);
     return render(
         <html>
