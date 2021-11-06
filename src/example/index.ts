@@ -9,8 +9,17 @@ import {fetch} from "../fetch/fetch";
 
 addEventListener("execute", async () => {
     if (typeof document === "undefined") return;
-
-    console.log("Execute!");
+    if ('serviceWorker' in navigator) {
+        const entry = document.querySelector("script[type=module][src][data-environment-service]");
+        if (entry) {
+            const src = entry.getAttribute("src");
+            if (src) {
+                await navigator.serviceWorker.register(src, {
+                    type: "module"
+                });
+            }
+        }
+    }
 
     function getImports(root: HTMLElement | DocumentFragment) {
         const scripts = Array.from(root.querySelectorAll("script[type=module][src]"));

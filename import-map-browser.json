@@ -1,11 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>@opennetwork/environment</title>
-</head>
-<body>
-<script type="importmap">
 {
   "imports": {
     "@virtualstate/deno": "https://cdn.skypack.dev/@virtualstate/deno",
@@ -33,7 +25,3 @@
     "uuid": "https://cdn.skypack.dev/uuid"
   }
 }
-</script>
-<script type="module" src="./browser/example-run.js" data-environment-service></script>
-</body>
-</html>

@@ -44,8 +44,9 @@ export class Environment extends EnvironmentTemplate {
     }
 
     async configure(): Promise<void> {
-
         setEnvironment(() => this);
+
+        await import("./fetch-service");
 
         const config = {
             ...isBrowserEnvironmentConfigWindow(window) ? window[BrowserEnvironmentConfig] : {}

@@ -3,7 +3,7 @@ import { promises as fs } from "fs"
 import path from "path"
 
 FileHound.create()
-  .paths("./esnext")
+  .paths(process.env.INPUT || "./esnext")
   .discard("web_modules")
   .discard("node_modules")
   .ext("js")
@@ -25,20 +25,29 @@ FileHound.create()
               return;
             }
 
+            const importMap = process.env.IMPORT_MAP ? JSON.parse(await fs.readFile(process.env.IMPORT_MAP, "utf-8")) : undefined;
             const contents = await statements.reduce(
               async (contentsPromise, statement) => {
                 const contents = await contentsPromise;
-
                 const url = statement.match(/"(.+)"/)[1];
-
-                if (process.env.WEB_MODULES && url.indexOf(".") === -1) {
-                  let replacement = path.relative(path.dirname(filePath), `${__dirname}/esnext/web_modules/${url}.js`);
-                  if (replacement.indexOf(".") !== -1) {
-                    replacement = `./${replacement}`;
+                if (importMap?.imports?.[url]) {
+                  const replacement = importMap.imports[url];
+                  if (!replacement.includes("./src")) {
+                    return contents.replace(
+                      statement,
+                      statement.replace(url, replacement)
+                    );
                   }
+                  const shift = filePath
+                    .split("/")
+                    // Skip top folder + file
+                    .slice(2)
+                    // Replace with shift up directory
+                    .map(() => "..")
+                    .join("/");
                   return contents.replace(
                     statement,
-                    statement.replace(url, replacement)
+                    statement.replace(url, replacement.replace("./src", shift).replace(/\.tsx?$/, ".js"))
                   );
                 } else {
                   return contents.replace(
