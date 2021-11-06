@@ -8,6 +8,8 @@ import {addEventListener} from "../environment/environment";
 import {fetch} from "../fetch/fetch";
 
 addEventListener("execute", async () => {
+    if (typeof document === "undefined") return;
+
     console.log("Execute!");
 
     function getImports(root: HTMLElement | DocumentFragment) {
