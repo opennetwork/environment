@@ -39,9 +39,7 @@ export async function start(): Promise<void> {
     const config = getEnvironmentConfig()
     const environment = getEnvironment();
 
-    console.log({ fetchEnvironment: environment });
-
-    console.log("Start fetch service", config.fetchService);
+    // console.log("Start fetch service", config.fetchService);
 
     if (!config.fetchService) {
         return
@@ -66,7 +64,8 @@ export async function start(): Promise<void> {
                 method: request.method
             }),
             type: "fetch",
-            abortTimeout
+            abortTimeout,
+            environment
         });
         const { body, status, statusText, headers } = await response;
         return new Response(body, {

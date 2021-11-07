@@ -1,62 +1,53 @@
-import {addEventListener, dispatchEvent, getEnvironmentContext} from "../environment/environment";
+import {addEventListener, dispatchEvent, removeEventListener} from "../environment/environment";
 import {createFlag, resetFlag} from "../flags/config";
 import {hasFlag, removeFlag, setFlag} from "../flags/flags";
+import {v4} from "uuid";
 
-addEventListener("configure", async function configure(event) {
-  createFlag("FLAG")
+addEventListener("configure", () => createFlag("FLAG"));
 
-  console.log({
-    FLAG_create: hasFlag("FLAG")
-  })
+addEventListener("test", async function configure() {
+  if (hasFlag("FLAG")) {
+    throw new Error("Expected flag to be disabled by default");
+  }
 
   setFlag("FLAG")
+  if (!hasFlag("FLAG")) {
+    throw new Error("Expected flag to exist after being set");
+  }
 
-  console.log({
-    FLAG_set: hasFlag("FLAG")
-  })
+  const id = v4();
+  const childEvent = `child-event-${id}`;
 
-  addEventListener("child event", () => {
-    console.log({
-      // flags are available in children events
-      FLAG_child: hasFlag("FLAG")
-    })
-  })
+  const childEventHandler = () => {
+    if (!hasFlag("FLAG")) {
+      throw new Error("Expected flag to exist in child event");
+    }
+  };
+  addEventListener(childEvent, childEventHandler)
 
-  await dispatchEvent({ type: "child event" })
+  await dispatchEvent({ type: childEvent })
+  removeEventListener(childEvent, childEventHandler);
 
   resetFlag("FLAG")
-  console.log({
-    // Resetting a flag hides it from the environment, whether it is set or removed
-    FLAG_reset: hasFlag("FLAG")
-  })
+  if (hasFlag("FLAG")) {
+    throw new Error("Expected reset to remove flag");
+  }
 
   createFlag("FLAG")
-  console.log({
-    // Resetting + Creating does not remove flag states
-    FLAG_created: hasFlag("FLAG")
-  })
+  if (!hasFlag("FLAG")) {
+    throw new Error("Expected flag to be retained after reset + creation with no remove")
+  }
 
   removeFlag("FLAG");
-  console.log({
-    // Removing a flag specifically is turning it off
-    FLAG_removed: hasFlag("FLAG")
-  });
+  if (hasFlag("FLAG")) {
+    throw new Error("Expected removal to remove flag!");
+  }
 
   setFlag("FLAG")
-  console.log({
-    FLAG_set: hasFlag("FLAG")
-  });
-
-  const context = getEnvironmentContext()
-  if (context) {
-    context["identity"] = {
-      _id: "1"
-    }
+  if (!hasFlag("FLAG")) {
+    throw new Error("Expected set flag to again re-create the flag");
   }
-})
 
-addEventListener("execute", async function handler() {
-  console.log({
-    FLAG: hasFlag("FLAG")
-  })
-})
+  // Reset to deleted
+  removeFlag("FLAG");
+});

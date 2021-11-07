@@ -21,13 +21,18 @@
     "typescript": "^4.4.2"
   },
   "scripts": {
-    "build": "rm -rf esnext && mkdir esnext && tsc && npm run postbuild",
-    "postbuild": "node scripts/post-build.js && yarn postbuild:deno && yarn postbuild:browser",
+    "build:all": "yarn build:base",
+    "build:base": "rm -rf esnext && mkdir esnext && tsc",
+    "build:node": "yarn build:base",
+    "build:deno": "yarn build:base",
+    "build:browser": "yarn build:base",
+    "postbuild:all": "yarn postbuild:deno && yarn postbuild:browser",
+    "postbuild:base": "node scripts/post-build.js",
     "postbuild:deno": "rm -rf deno && cp -r esnext deno && INPUT=./deno IMPORT_MAP=./import-map-deno.json node scripts/post-build.js",
     "postbuild:browser": "rm -rf browser && cp -r esnext browser && INPUT=./browser IMPORT_MAP=./import-map-browser.json node scripts/post-build.js",
-    "deno:dev": "yarn build && FLAGS=POST_CONFIGURE_TEST yarn deno:example",
-    "deno:dev:reload": "yarn build && FLAGS=POST_CONFIGURE_TEST yarn deno:example:reload",
-    "node:dev": "yarn build && FLAGS=POST_CONFIGURE_TEST yarn node:example",
+    "deno:dev": "yarn build:deno && FLAGS=POST_CONFIGURE_TEST yarn deno:example",
+    "deno:dev:reload": "yarn build:deno && FLAGS=POST_CONFIGURE_TEST yarn deno:example:reload",
+    "node:dev": "yarn build:node && FLAGS=POST_CONFIGURE_TEST yarn node:example",
     "node:example": "FETCH_SERVICE_PORT=8080 node --trace-warnings ./esnext/example/index.js",
     "deno:example": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS ./deno/example/index.js",
     "deno:example:reload": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS --reload ./deno/example/index.js"

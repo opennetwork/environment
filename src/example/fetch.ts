@@ -1,9 +1,10 @@
-import {addEventListener, dispatchEvent} from "../environment/environment";
+import {addEventListener, dispatchEvent, getEnvironment} from "../environment/environment";
 import { Response } from "@opennetwork/http-representation";
 import { fetch} from "../fetch/fetch";
 import {addFetchEventListener, addRenderEventListener, addRenderFetchEventListener} from "./lib";
 import {getStore} from "../storage/store/store";
 import {v4} from "uuid";
+import {FetchEvent} from "../fetch/event";
 
 function notFound() {
     return new Response("Not Found", {
@@ -12,7 +13,7 @@ function notFound() {
 }
 
 addFetchEventListener({ method: "PUT", pathname: /^\/(data|browser-data|template-data)$/ }, async ({ request }) => {
-    console.log({ body: await request.json() });
+    await request.json(); // Consume the body, anything that tries to consume this again will receive an error
 });
 
 addRenderFetchEventListener({ method: "GET", pathname: /^\/(view|template)$/ });
@@ -101,13 +102,30 @@ addFetchEventListener({ pathname: "/uncaught-error" }, () => {
     throw new Error("Externally triggered uncaught error")
 });
 
-addFetchEventListener({ pathname: "/internal-test" }, async ({ respondWith, request, url }) => {
-    await dispatchEvent({
-        type: "test",
-        request,
-        url
-    });
-    respondWith(new Response("OK", { status: 200 }));
+addFetchEventListener({ pathname: "/internal-test" }, async ({ respondWith, request, url, environment }) => {
+   try {
+       await dispatchEvent({
+           type: "test",
+           request,
+           url,
+           environment
+       });
+       respondWith(new Response("OK", { status: 200 }));
+   } catch (error) {
+       console.error({ internalTestsError: error });
+       respondWith(new Response("NOT OK", { status: 500 }));
+   }
+})
+
+addEventListener("external-fetch", async ({ request, respondWith }: FetchEvent<"external-fetch">) => {
+    if (request.url === "https://example.com/") {
+        return respondWith(new Response("Example.com contents!", {
+            status: 200
+        }));
+    }
+    return respondWith(new Response("Not Found", {
+        status: 404
+    }));
 })
 
 addEventListener("fetch", async ({ respondWith }) => {

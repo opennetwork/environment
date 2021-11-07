@@ -32,11 +32,16 @@ export async function run(config: EnvironmentConfig) {
                 })
 
                 if (hasFlag("POST_CONFIGURE_TEST") && await hasEventListener("test")) {
-                    await dispatchEvent({
-                        type: "test",
-                        environment,
-                        parallel: false
-                    });
+                    try {
+                        await dispatchEvent({
+                            type: "test",
+                            environment,
+                            parallel: false
+                        });
+                    } catch (error) {
+                        console.error({ runnerTestError: error });
+                        await Promise.reject(error);
+                    }
                 }
 
                 try {

@@ -76,6 +76,8 @@ addEventListener("configure", async () => {
 export async function start(): Promise<void> {
     const config = getEnvironmentConfig()
 
+    const environment = getEnvironment();
+
     if (!config.fetchService) {
         return
     }
@@ -183,7 +185,6 @@ export async function start(): Promise<void> {
         async function run() {
             const counter = getBoundCounter(httpRequest.url);
             counter?.add(1);
-            const environment = await getEnvironment();
             const controller = new AbortController()
             environment.addAbortController(controller)
             request.on("abort", () => controller.abort());
@@ -193,6 +194,7 @@ export async function start(): Promise<void> {
                 abortTimeout,
                 signal: controller.signal,
                 type: "fetch",
+                environment,
             });
             try {
                 const httpResponse = await responsePromise;

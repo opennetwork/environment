@@ -1,9 +1,9 @@
 import {addEventListener} from "../environment/environment";
 import {dispatchFetchEvent, fetch} from "../fetch/fetch";
-import {Request, Response} from "@opennetwork/http-representation";
-import {FetchEvent} from "../fetch/event";
+import {Request} from "@opennetwork/http-representation";
+import {v4} from "uuid";
 
-addEventListener("test", () => console.log("Execute tests"));
+// addEventListener("test", () => console.log("Execute tests"));
 
 addEventListener("test", async () => {
     const [, promise] = await dispatchFetchEvent({
@@ -14,7 +14,10 @@ addEventListener("test", async () => {
     });
     const response = await promise;
     const ping = await response.text();
-    console.log({ ping });
+    if (ping !== "Pong") {
+        console.log({ ping });
+        throw new Error("Expected Pong");
+    }
 })
 
 addEventListener("test", async () => {
@@ -22,27 +25,23 @@ addEventListener("test", async () => {
         method: "GET"
     });
     const pong = await response.text();
-    console.log({ pong });
+    if (pong !== "Ping") {
+        console.log({ pong });
+        throw new Error("Expected Ping");
+    }
 })
 
 // A maybe idea
-addEventListener("external-fetch", async ({ request, respondWith }: FetchEvent<"external-fetch">) => {
-    if (request.url === "https://example.com") {
-        return respondWith(new Response("Example.com contents!", {
-            status: 200
-        }));
-    }
-    return respondWith(new Response("Not Found", {
-        status: 404
-    }));
-})
 
 addEventListener("test", async () => {
     const response = await fetch("https://example.com", {
         method: "GET"
     });
     const example = await response.text();
-    console.log({ example });
+    if (example !== "Example.com contents!") {
+        console.log({ example });
+        throw new Error("Expected example.com");
+    }
 })
 
 addEventListener("test", async () => {
@@ -50,7 +49,10 @@ addEventListener("test", async () => {
         method: "GET"
     });
     const { data } = await response.json();
-    console.log({ data });
+    if (data !== "value!") {
+        console.log({ data });
+        throw new Error("Expected data");
+    }
 })
 
 addEventListener("test", async () => {
@@ -61,7 +63,10 @@ addEventListener("test", async () => {
         })
     });
     const { data } = await response.json();
-    console.log({ data });
+    if (data !== "value!") {
+        console.log({ data });
+        throw new Error("Expected data");
+    }
 })
 
 addEventListener("test", async () => {
@@ -69,7 +74,10 @@ addEventListener("test", async () => {
         method: "GET"
     });
     const view = await response.text();
-    console.log({ view });
+    if (!view.startsWith("<!DOCTYPE html>\n<html")) {
+        console.log({ view });
+        throw new Error("Expected html view");
+    }
 })
 
 addEventListener("test", async () => {
@@ -77,26 +85,68 @@ addEventListener("test", async () => {
         method: "GET"
     });
     const template = await response.text();
-    console.log({ template });
+    if (!template.startsWith("<template")) {
+        console.log({ template });
+        throw new Error("Expected template");
+    }
 })
 
 addEventListener("test", async () => {
     const response = await fetch("/500", {
         method: "GET"
     });
-    console.log({ 500: response.status === 500 });
+    if (response.status !== 500) {
+        console.log({ uncaughtStatus: response.status });
+        throw new Error("Expected 500");
+    }
 })
 
 addEventListener("test", async () => {
     const response = await fetch("/uncaught-error", {
         method: "GET"
     });
-    console.log({ uncaughtIs500: response.status === 500 });
+    if (response.status !== 500) {
+        console.log({ uncaughtStatus: response.status });
+        throw new Error("Expected 500");
+    }
 })
 
 addEventListener("test", async () => {
     const response = await fetch("/uncaught-error-inner", {
         method: "GET"
     });
-    console.log({ uncaughtInnerIs500: response.status === 500 });
+    if (response.status !== 500) {
+        console.log({ uncaughtStatus: response.status });
+        throw new Error("Expected 500");
+    }
+})
+
+addEventListener("test", async () => {
+    const identifier = v4();
+    const input = {
+        '@type': 'type',
+        identifier,
+        name: `Name for ${identifier}`
+    } as const;
+    const body = JSON.stringify(input);
+    const putResponse = await fetch(`/store/type/${input.identifier}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body
+    });
+    if (!putResponse.ok) throw new Error("PUT not ok");
+    const getResponse = await fetch(`/store/type/${input.identifier}`, {
+        method: "GET",
+        headers: {
+            Accept: "application/json"
+        }
+    });
+    const got = await getResponse.text();
+    if (!getResponse.ok) throw new Error("GET not ok");
+    if (got !== body) {
+        console.log({ got, body });
+        throw new Error("Expected matching response");
+    }
 })

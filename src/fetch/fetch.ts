@@ -1,5 +1,5 @@
 import {Response as AnyResponse, Request, RequestInfo} from "@opennetwork/http-representation";
-import {dispatchEvent, getEnvironment, hasEventListener} from "../environment/environment";
+import {dispatchEvent, Environment, getEnvironment, hasEventListener} from "../environment/environment";
 import {FetchEvent} from "./event";
 import AbortController from "abort-controller";
 import {defer} from "../deferred";
@@ -12,7 +12,7 @@ export async function fetch(url: string, init?: RequestInit): Promise<AnyRespons
     if (url.startsWith("https://") || url.startsWith("http://")) {
         if (await hasEventListener("external-fetch")) {
             type = "external-fetch";
-        } else {
+        } else if (!globalFetch) {
             throw new Error("Not Implemented");
         }
     } else {
@@ -45,15 +45,17 @@ export interface FetchEventInit<T extends string> {
     abortTimeout?: number | boolean;
     signal?: AbortSignal;
     type: T;
+    environment?: Environment
 }
 
 export async function dispatchFetchEvent<T extends string>({
     request: httpRequest,
     abortTimeout,
     signal: externalSignal,
-    type
+    type,
+    environment: externalEnvironment
 }: FetchEventInit<T>): Promise<[FetchEvent<T>, Promise<AnyResponse>]> {
-    const environment = getEnvironment();
+    const environment = externalEnvironment ?? getEnvironment();
     const controller = new AbortController()
     environment.addAbortController(controller)
     const { resolve: respondWith, reject: respondWithError, promise: responded } = defer<AnyResponse>()
@@ -72,7 +74,8 @@ export async function dispatchFetchEvent<T extends string>({
             await promise
         },
         parallel: false,
-        signal: controller.signal
+        signal: controller.signal,
+        environment
     }
     let timeout: unknown
     try {
