@@ -143,10 +143,10 @@ addEventListener("test", async () => {
             Accept: "application/json"
         }
     });
-    const got = await getResponse.text();
+    const got = await getResponse.json();
     if (!getResponse.ok) throw new Error("GET not ok");
-    if (got !== body) {
-        console.log({ got, body });
+    if (Object.entries(input).find(([key, value]) => got[key] !== value ? key : undefined)) {
+        console.log({ got, input });
         throw new Error("Expected matching response");
     }
 })

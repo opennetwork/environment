@@ -1,15 +1,16 @@
 import { addStoreFetchEventListener } from "./lib";
 
+const pathname = "/store";
+
 addStoreFetchEventListener({
-    pathname: "/store",
-    getKey(type, identifier, { url: { origin } }): string {
-        const url = new URL(origin);
-        url.pathname = `/${type}/${identifier}`;
-        return url.toString();
+    pathname,
+    getKey(type, identifier): string {
+        return new URL(`/${type}/${identifier}`, "https://storage").toString();
     },
-    transformInput(input, identifier, type) {
+    transformInput(input, identifier, type, { url }) {
         return {
             ...input,
+            url: url.toString(),
             identifier,
             "@type": type
         }

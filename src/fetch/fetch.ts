@@ -3,7 +3,6 @@ import {dispatchEvent, Environment, getEnvironment, hasEventListener} from "../e
 import {FetchEvent} from "./event";
 import AbortController from "abort-controller";
 import {defer} from "../deferred";
-import {isSignalHandled} from "../events/target/target";
 import {trace} from "../tracing/span";
 import {globalFetch} from "./global";
 

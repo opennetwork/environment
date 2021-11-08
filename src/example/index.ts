@@ -1,6 +1,7 @@
 import "./error";
-import "./store";
+import "./tracing";
 import "./render";
+import "./store";
 import "./fetch";
 import "./storage";
 import "./flags";
@@ -56,7 +57,7 @@ addEventListener("execute", async () => {
       if (!response.ok) throw new Error("Template not found");
       const templateHTML = await response.text();
       const templateRoot = document.createElement("div");
-        console.log({ templateHTML });
+      console.log({ templateHTML });
       templateRoot.innerHTML = templateHTML;
       const template = templateRoot.querySelector("template");
       if (template) {

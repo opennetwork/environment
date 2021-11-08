@@ -1,6 +1,7 @@
 import "./error.js";
-import "./store.js";
+import "./tracing.js";
 import "./render.js";
+import "./store.js";
 import "./fetch.js";
 import "./storage.js";
 import "./flags.js";
