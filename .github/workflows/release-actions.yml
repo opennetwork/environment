@@ -34,7 +34,7 @@ jobs:
           npm set "registry=https://registry.npmjs.org/"
           npm set "@opennetwork:registry=https://registry.npmjs.org/"
           npm set "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}"
-          lerna publish from-package --yes --no-verify-access --registry https://registry.npmjs.org/
+          npm publish --access=public
         continue-on-error: true
         env:
           YARN_TOKEN: ${{ secrets.YARN_TOKEN }}
@@ -51,7 +51,7 @@ jobs:
           npm set "registry=https://npm.pkg.github.com/"
           npm set "@opennetwork:registry=https://npm.pkg.github.com/opennetwork"
           npm set "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}"
-          lerna publish from-package --yes --no-verify-access --registry https://npm.pkg.github.com/
+          npm publish --access=public
         env:
           YARN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
