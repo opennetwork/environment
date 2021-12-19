@@ -15,7 +15,7 @@ export {
     EventCallback
 }
 
-export interface EventTargetAddListenerOptions extends Record<string, unknown>, Pick<EventDescriptor, "once"> {
+export interface EventTargetAddListenerOptions extends Pick<EventDescriptor, "once"> {
 
 }
 
