@@ -2,6 +2,7 @@ import {addEventListener} from "../environment/environment";
 import {dispatchFetchEvent, fetch} from "../fetch/fetch";
 import {Request} from "@opennetwork/http-representation";
 import {v4} from "uuid";
+import "./once.test";
 
 // addEventListener("test", () => console.log("Execute tests"));
 

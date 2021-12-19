@@ -3,7 +3,7 @@ import { Environment, getEnvironment } from "../../environment/environment"
 import { getEvent, runWithEvent } from "../event/dispatcher"
 import { getEventContext, EventListener, hasEventContext } from "../event/context"
 import { EventCallback, SyncEventCallback } from "../event/callback"
-import { EventDescriptor } from "../event/descriptor"
+import {EventDescriptor, EventDescriptorSymbol} from "../event/descriptor"
 import { matchEventCallback } from "../event/callback"
 import { runWithSpanOptional, trace } from "../../tracing/span"
 import { isParallelEvent } from "../parallel-event"
@@ -15,15 +15,19 @@ export {
     EventCallback
 }
 
+export interface EventTargetAddListenerOptions extends Record<string, unknown>, Pick<EventDescriptor, "once"> {
+
+}
+
 export interface SyncEventTarget<Event = unknown, This = unknown> {
-    addEventListener(type: string, callback: SyncEventCallback<Event, This>): void
-    removeEventListener(type: string, callback: SyncEventCallback<Event, This>): void
+    addEventListener(type: string, callback: SyncEventCallback<Event, This>, options?: EventTargetAddListenerOptions): void
+    removeEventListener(type: string, callback: SyncEventCallback<Event, This>, options?: unknown): void
     dispatchEvent(event: Event): void
 }
 
 export interface EventTarget<This = unknown> extends SyncEventTarget<Event, This> {
-    addEventListener(type: string, callback: EventCallback<Event, This>): void
-    removeEventListener(type: string, callback: Function): void
+    addEventListener(type: string, callback: EventCallback<Event, This>, options?: EventTargetAddListenerOptions): void
+    removeEventListener(type: string, callback: Function, options?: unknown): void
     dispatchEvent(event: Event): void | Promise<void>
     hasEventListener(type: string, callback?: Function): Promise<boolean>
 }
@@ -48,10 +52,13 @@ export class EventTarget implements EventTarget {
         this.#environment = environment
     }
 
-    addEventListener(type: string, callback: EventCallback) {
+    addEventListener(type: string, callback: EventCallback, options?: Record<string, unknown>) {
         const listener: EventListener = {
+            ...options,
             isListening: () => !!this.#listeners.find(matchEventCallback(type, callback)),
             descriptor: {
+                [EventDescriptorSymbol]: true,
+                ...options,
                 type,
                 callback
             },
@@ -68,11 +75,11 @@ export class EventTarget implements EventTarget {
         }
     }
 
-    removeEventListener(type: string, callback: Function) {
+    removeEventListener(type: string, callback: Function, options?: unknown) {
         if (!isFunctionEventCallback(callback)) {
             return
         }
-        const index = this.#listeners.findIndex(matchEventCallback(type, callback))
+        const index = this.#listeners.findIndex(matchEventCallback(type, callback, options))
         if (index === -1) {
             return
         }
@@ -146,6 +153,16 @@ export class EventTarget implements EventTarget {
                     }
 
                     const promise = runWithSpanOptional("event_dispatched", { attributes: { type: event.type, listener: index } }, async () => {
+                        // Remove the listener before invoking the callback
+                        // This ensures that inside of the callback causes no more additional event triggers to this
+                        // listener
+                        if (descriptor.once) {
+                            // by passing the descriptor as the options, we get an internal redirect
+                            // that forces an instance level object equals, meaning
+                            // we will only remove _this_ descriptor!
+                            this.removeEventListener(descriptor.type, descriptor.callback, descriptor);
+                        }
+
                         if (environment) {
                             await environment.runInAsyncScope(async () => {
                                 await descriptor.callback.call(this.#thisValue, event)

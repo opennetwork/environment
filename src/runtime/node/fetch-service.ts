@@ -78,7 +78,7 @@ export async function start(): Promise<void> {
 
     const environment = getEnvironment();
 
-    if (!config.fetchService) {
+    if (!config.fetchService || hasFlag("FETCH_SERVICE_DISABLE")) {
         return
     }
 

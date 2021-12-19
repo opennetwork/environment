@@ -4,5 +4,5 @@ browser
 node_modules
 .idea
 wrangler.toml
-./coverage
+coverage
 .DS_Store

@@ -1,4 +1,4 @@
-import { EventCallback, Event } from "../events/events"
+import {EventCallback, Event, EventTargetAddListenerOptions} from "../events/events"
 import { EnvironmentEventTarget } from "./events"
 import { error as traceError } from "../tracing/tracing"
 import { EnvironmentEvents } from "../events/events"
@@ -137,16 +137,16 @@ const localStorage = createLocalStorage<() => Environment | undefined>();
 const topLevelEnvironment = new Environment("top")
 const defaultEventTarget = topLevelEnvironment;
 
-export function addEventListener<Type extends (keyof EnvironmentEvents & string)>(type: Type, callback: EventCallback<EnvironmentEvents[Type] & Event<Type>>): void
-export function addEventListener<E extends Event, This = unknown>(type: E["type"], callback: EventCallback<E, This>): void
-export function addEventListener(type: string, callback: EventCallback): void
-export function addEventListener(type: string, callback: EventCallback<any>): void {
-    (getOptionalEnvironment() ?? defaultEventTarget).addEventListener(type, callback)
+export function addEventListener<Type extends (keyof EnvironmentEvents & string)>(type: Type, callback: EventCallback<EnvironmentEvents[Type] & Event<Type>>, options?: EventTargetAddListenerOptions): void
+export function addEventListener<E extends Event, This = unknown>(type: E["type"], callback: EventCallback<E, This>, options?: EventTargetAddListenerOptions): void
+export function addEventListener(type: string, callback: EventCallback, options?: EventTargetAddListenerOptions): void
+export function addEventListener(type: string, callback: EventCallback, options?: EventTargetAddListenerOptions): void {
+    (getOptionalEnvironment() ?? defaultEventTarget).addEventListener(type, callback, options);
 }
 
-export function removeEventListener(type: string, callback: Function) {
-    defaultEventTarget.removeEventListener(type, callback)
-    getOptionalEnvironment()?.removeEventListener(type, callback);
+export function removeEventListener(type: string, callback: Function, options?: unknown) {
+    defaultEventTarget.removeEventListener(type, callback, options);
+    getOptionalEnvironment()?.removeEventListener(type, callback, options);
 }
 
 export async function dispatchEvent<Type extends (keyof EnvironmentEvents & string)>(event: EnvironmentEvents[Type] & Event<Type>): Promise<void> {
