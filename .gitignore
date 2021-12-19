@@ -1,6 +1,6 @@
-./esnext
-./deno
-./browser
+esnext
+deno
+browser
 node_modules
 .idea
 wrangler.toml
