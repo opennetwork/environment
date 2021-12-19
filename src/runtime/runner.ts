@@ -20,6 +20,12 @@ export async function run(config: EnvironmentConfig) {
                 })
 
                 await dispatchEvent({
+                    type: "install",
+                    environment,
+                    parallel: false
+                })
+
+                await dispatchEvent({
                     type: "configure",
                     environment,
                     parallel: false
@@ -38,6 +44,7 @@ export async function run(config: EnvironmentConfig) {
                             environment,
                             parallel: false
                         });
+                        console.error({ tests: "pass" });
                     } catch (error) {
                         console.error({ runnerTestError: error });
                         await Promise.reject(error);
@@ -56,6 +63,7 @@ export async function run(config: EnvironmentConfig) {
                     }
                     await runWithSpan("environment_wait_for_services", {}, () => environment.waitForServices())
                 } catch (error) {
+                    errors.push(error);
                     if (await hasEventListener("error")) {
                         await dispatchEvent({
                             type: "error",
@@ -63,7 +71,6 @@ export async function run(config: EnvironmentConfig) {
                         })
                     } else {
                         console.error(error);
-                        errors.push(error);
                     }
                 } finally {
                     await dispatchEvent({
@@ -78,11 +85,11 @@ export async function run(config: EnvironmentConfig) {
             })
 
         })
-
     } catch (error) {
         console.error(error)
         errors.push(error);
     }
+    console.log({ errors });
     if (errors.length === 1) {
         // Bypass throw, retain original error stack
         await Promise.reject(errors[0]);

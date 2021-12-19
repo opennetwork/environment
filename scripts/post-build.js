@@ -1,84 +1,40 @@
-import FileHound from "filehound"
-import { promises as fs } from "fs"
-import path from "path"
+import "./correct-import-extensions.js";
+import { promises as fs } from "fs";
 
-FileHound.create()
-  .paths(process.env.INPUT || "./esnext")
-  .discard("web_modules")
-  .discard("node_modules")
-  .ext("js")
-  .find()
-  .then(
-    async filePaths => {
-      await Promise.all(
-        filePaths.map(
-          async filePath => {
+if (!process.env.NO_COVERAGE_BADGE_UPDATE) {
 
-            const initialContents = await fs.readFile(
-              filePath,
-              "utf-8"
-            );
+  const badges = [];
 
-            const statements = initialContents.match(/(?:(?:import|export)(?: .+ from)? ".+";|(?:import\(".+"\)))/g);
-
-            if (!statements) {
-              return;
-            }
-
-            const importMap = process.env.IMPORT_MAP ? JSON.parse(await fs.readFile(process.env.IMPORT_MAP, "utf-8")) : undefined;
-            const contents = await statements.reduce(
-              async (contentsPromise, statement) => {
-                const contents = await contentsPromise;
-                const url = statement.match(/"(.+)"/)[1];
-                if (importMap?.imports?.[url]) {
-                  const replacement = importMap.imports[url];
-                  if (!replacement.includes("./src")) {
-                    return contents.replace(
-                      statement,
-                      statement.replace(url, replacement)
-                    );
-                  }
-                  const shift = filePath
-                    .split("/")
-                    // Skip top folder + file
-                    .slice(2)
-                    // Replace with shift up directory
-                    .map(() => "..")
-                    .join("/");
-                  return contents.replace(
-                    statement,
-                    statement.replace(url, replacement.replace("./src", shift).replace(/\.tsx?$/, ".js"))
-                  );
-                } else {
-                  return contents.replace(
-                    statement,
-                    await getReplacement(url)
-                  );
-                }
-
-                async function getReplacement(url) {
-                  const [stat, indexStat] = await Promise.all([
-                    fs.stat(path.resolve(path.dirname(filePath), url + ".js")).catch(() => {}),
-                    fs.stat(path.resolve(path.dirname(filePath), url + "/index.js")).catch(() => {})
-                  ]);
-
-                  if (stat && stat.isFile()) {
-                    return statement.replace(url, url + ".js");
-                  } else if (indexStat && indexStat.isFile()) {
-                    return statement.replace(url, url + "/index.js");
-                  }
-                  return statement;
-                }
-              },
-              Promise.resolve(initialContents)
-            );
-
-            await fs.writeFile(filePath, contents, "utf-8");
-
-          }
-        )
-      )
-    }
+  badges.push(
+    `![nycrc config on GitHub](https://img.shields.io/nycrc/virtualstate/x)`
   )
-  .then(() => console.log("Complete"))
-  .catch(error => console.error(error));
+
+  const coverage = await fs.readFile("coverage/coverage-summary.json", "utf8").then(JSON.parse).catch(() => ({}));
+  const coverageConfig = await fs.readFile(".nycrc", "utf8").then(JSON.parse);
+  for (const [name, { pct }] of Object.entries(coverage?.total ?? {})) {
+    const good = coverageConfig[name];
+    if (!good) continue; // not configured
+    const color = pct >= good ? "brightgreen" : "yellow";
+    const message = `${pct}%25`;
+    badges.push(
+      `![${message} ${name} covered](https://img.shields.io/badge/${name}-${message}-${color})`
+    );
+  }
+
+  const tag = "[//]: # (badges)";
+
+  const readMe = await fs.readFile("README.md", "utf8");
+  const badgeStart = readMe.indexOf(tag);
+  const badgeStartAfter = badgeStart + tag.length;
+  if (badgeStart === -1) {
+    throw new Error(`Expected to find "${tag}" in README.md`);
+  }
+  const badgeEnd = badgeStartAfter + readMe.slice(badgeStartAfter).indexOf(tag);
+  const badgeEndAfter = badgeEnd + tag.length;
+  const readMeBefore = readMe.slice(0, badgeStart);
+  const readMeAfter = readMe.slice(badgeEndAfter);
+
+  const readMeNext = `${readMeBefore}${tag}\n\n${badges.join(" ")}\n\n${tag}${readMeAfter}`;
+  await fs.writeFile("README.md", readMeNext);
+  console.log("Wrote coverage badges!");
+}

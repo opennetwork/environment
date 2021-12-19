@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/jsdom": "^16.2.13",
     "@types/node": "^13.13.4",
+    "c8": "^7.10.0",
     "commander": "^5.1.0",
     "esm": "^3.2.25",
     "filehound": "^1.17.4",
@@ -34,8 +35,9 @@
     "deno:dev:reload": "yarn build:deno && FLAGS=POST_CONFIGURE_TEST yarn deno:example:reload",
     "node:dev": "yarn build:node && FLAGS=POST_CONFIGURE_TEST yarn node:example",
     "node:example": "FETCH_SERVICE_PORT=8080 node --trace-warnings ./esnext/example/index.js",
-    "deno:example": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS ./deno/example/index.js",
-    "deno:example:reload": "deno run --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS --reload ./deno/example/index.js"
+    "deno:example": "deno run --unstable --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS ./deno/example/index.js",
+    "deno:example:reload": "deno run --unstable --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS --reload ./deno/example/index.js",
+    "coverage": "yarn build:base && c8 node ./esnext/example/index.js"
   },
   "esm": {
     "cjs": true,

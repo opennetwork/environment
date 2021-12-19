@@ -1,6 +1,10 @@
 import { Event, EventCallback, EventTarget } from "../events/events"
 import { Environment } from "./environment"
 
+export interface InstallEvent extends Event<"install"> {
+    environment: Environment
+}
+
 export interface ConfigureEvent extends Event<"configure"> {
     environment: Environment
 }
@@ -20,6 +24,7 @@ export interface ErrorEvent extends Event<"error"> {
 declare global {
 
     interface EnvironmentEvents {
+        install: InstallEvent
         configure: ConfigureEvent
         execute: ExecuteEvent
         complete: CompleteEvent

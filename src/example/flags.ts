@@ -1,16 +1,25 @@
-import {addEventListener, dispatchEvent, removeEventListener} from "../environment/environment";
-import {createFlag, resetFlag} from "../flags/config";
+import {addEventListener, dispatchEvent, getEnvironment, removeEventListener} from "../environment/environment";
+import {createFlag, ensureFlag, getFlags, resetFlag} from "../flags/config";
 import {hasFlag, removeFlag, setFlag} from "../flags/flags";
 import {v4} from "uuid";
 
-addEventListener("configure", () => createFlag("FLAG"));
+addEventListener("install", () => {
+  console.log("install");
+});
+
+addEventListener("configure", () => {
+  console.log("configure");
+});
 
 addEventListener("test", async function configure() {
+  ensureFlag("FLAG");
+
   if (hasFlag("FLAG")) {
     throw new Error("Expected flag to be disabled by default");
   }
 
   setFlag("FLAG")
+
   if (!hasFlag("FLAG")) {
     throw new Error("Expected flag to exist after being set");
   }

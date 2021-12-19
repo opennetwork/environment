@@ -1,6 +1,6 @@
 import { Event } from "./event"
 import { createLocalStorage } from "../../local-storage"
-import { getEnvironment } from "../../environment/environment"
+import { getOptionalEnvironment } from "../../environment/environment"
 import { getEventContext } from "./context"
 
 const localStorage = createLocalStorage<Event>()
@@ -14,7 +14,7 @@ const TopLevelEvent: Event = Object.freeze({
 })
 
 export function getEvent() {
-    const environment = getEnvironment()
+    const environment = getOptionalEnvironment()
     if (!environment) {
         return TopLevelEvent
     }

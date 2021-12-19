@@ -9,7 +9,7 @@ import { runWithSpanOptional, trace } from "../../tracing/span"
 import { isParallelEvent } from "../parallel-event"
 import { isSignalEvent } from "../signal-event"
 import { isAbortError } from "../../errors/errors"
-import {getEnv} from "@virtualstate/examples/lib/log.util";
+import {hasFlag} from "../../flags/flags";
 
 export {
     EventCallback
@@ -99,7 +99,7 @@ export class EventTarget implements EventTarget {
             const eventEnvironment = event.environment;
             const environment = isEnvironmentIsh(eventEnvironment) ? eventEnvironment : this.#environment || getEnvironment()
 
-            if (environment && hasEventContext(event)) {
+            if (environment && hasEventContext(event) && hasFlag("EVENT_TARGET_FORCE_UNIQUE_INSTANCE")) {
                 // TODO decide if we should just do this anyway, it might lead to some confusing things happening so I think it is better to straight up disallow it
                 // In some cases users may expect their `this` scope to stay the same for the events methods, e.g. if the event was created as a class, so this should lead
                 // to them creating a new one or if the event class has a clone function..

@@ -1,4 +1,4 @@
-import {Environment, getEnvironment} from "../../environment/environment"
+import {Environment, getEnvironment, getOptionalEnvironment} from "../../environment/environment"
 import {Event} from "./event"
 import {EventDescriptor} from "./descriptor"
 
@@ -24,7 +24,7 @@ export interface EventContext {
 const globalEventContext = new WeakMap<Environment, WeakMap<Event, EventContext>>()
 
 export function hasEventContext(event: Event) {
-    const environment = getEnvironment()
+    const environment = getOptionalEnvironment()
     if (!environment) {
         return false
     }
@@ -37,11 +37,6 @@ export function hasEventContext(event: Event) {
 
 export function getEventContext(event: Event) {
     const environment = getEnvironment()
-
-    if (!environment) {
-        throw new Error("Environment required for EventContext")
-    }
-
     let environmentEventContext = globalEventContext.get(environment)
 
     if (!environmentEventContext) {

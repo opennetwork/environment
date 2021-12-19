@@ -1,10 +1,9 @@
-import { EventCallback, Event, EventTarget } from "../events/events"
+import { EventCallback, Event } from "../events/events"
 import { EnvironmentEventTarget } from "./events"
 import { error as traceError } from "../tracing/tracing"
 import { EnvironmentEvents } from "../events/events"
 import { AbortController, isAbortController } from "../events/events"
-import {getEnv} from "@virtualstate/examples/lib/log.util";
-import {createLocalStorage} from "../local-storage";
+import { createLocalStorage } from "../local-storage";
 
 export * from "./events"
 export * from "./context"
@@ -142,34 +141,39 @@ export function addEventListener<Type extends (keyof EnvironmentEvents & string)
 export function addEventListener<E extends Event, This = unknown>(type: E["type"], callback: EventCallback<E, This>): void
 export function addEventListener(type: string, callback: EventCallback): void
 export function addEventListener(type: string, callback: EventCallback<any>): void {
-    getEnvironment().addEventListener(type, callback)
+    (getOptionalEnvironment() ?? defaultEventTarget).addEventListener(type, callback)
 }
 
 export function removeEventListener(type: string, callback: Function) {
     defaultEventTarget.removeEventListener(type, callback)
-    getEnvironment().removeEventListener(type, callback);
+    getOptionalEnvironment()?.removeEventListener(type, callback);
 }
 
 export async function dispatchEvent<Type extends (keyof EnvironmentEvents & string)>(event: EnvironmentEvents[Type] & Event<Type>): Promise<void> {
-    const environment = getEnvironment();
-    if (await environment.hasEventListener(event.type)) {
-        return environment.dispatchEvent(event);
-    } else {
-        return defaultEventTarget.dispatchEvent(event);
+    const environment = getOptionalEnvironment();
+    if (environment && await environment.hasEventListener(event.type)) {
+        await environment.dispatchEvent(event);
     }
+    // environment should be on the event, allowing the environment context to be populated
+    await defaultEventTarget.dispatchEvent(event);
 }
 
 export async function hasEventListener(type: string, callback?: Function) {
     const [defaultHas, environmentHas] = await Promise.all([
         defaultEventTarget.hasEventListener(type, callback),
-        getEnvironment().hasEventListener(type, callback)
+        getOptionalEnvironment()?.hasEventListener(type, callback)
     ])
     return defaultHas || environmentHas;
 }
 
-export function getEnvironment() {
+export function getOptionalEnvironment() {
     const fn = localStorage.getStore();
-    return fn?.() || topLevelEnvironment;
+    return fn?.();
+}
+
+export function getEnvironment() {
+    const environment = getOptionalEnvironment();
+    return environment ?? topLevelEnvironment;
 }
 
 export function setEnvironment(fn: () => Environment | undefined) {

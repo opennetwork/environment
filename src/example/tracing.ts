@@ -1,9 +1,9 @@
 import {isRunning as isRunningNode} from "../runtime/node/is-running";
 import {addEventListener} from "../environment/environment";
 
-addEventListener("configure", async () => {
+addEventListener("install", async () => {
     if (isRunningNode()) {
-        const { configure } = await import("./tracing.node");
-        await configure();
+        const { install } = await import("./tracing.node");
+        await install();
     }
 });

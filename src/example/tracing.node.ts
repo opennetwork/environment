@@ -1,4 +1,6 @@
-export async function configure() {
+// deno-lint-ignore-file
+
+export async function install() {
     const { Metadata, credentials } = await import("@grpc/grpc-js");
     const {
         HONEYCOMB_API_KEY: apiKey,
