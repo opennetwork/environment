@@ -20,9 +20,13 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
       - run: yarn install
-      - run: yarn build
+      - run: yarn build:all
       - run: yarn coverage
-      - run: yarn examples:build
+      - run: |
+          yarn deno:example
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
       - name: Package Registry Publish - npm
         run: |
           git config user.name "${{ github.actor }}"
