@@ -35,7 +35,6 @@ export interface EventTarget<This = unknown> extends SyncEventTarget<Event, This
     removeEventListener(type: string, callback: Function, options?: unknown): void
     dispatchEvent(event: Event): void | Promise<void>
     hasEventListener(type: string, callback?: Function): Promise<boolean>
-    [EventTargetListeners]?: EventDescriptor[];
 }
 
 function isFunctionEventCallback(fn: Function): fn is EventCallback {
@@ -58,6 +57,10 @@ export class EventTarget implements EventTarget {
     constructor(thisValue: unknown = undefined, environment: Environment | undefined = undefined) {
         this.#thisValue = thisValue
         this.#environment = environment
+    }
+
+    get [EventTargetListeners](): EventDescriptor[] | undefined {
+        return [...this.#listeners];
     }
 
     addEventListener(type: string, callback: EventCallback, options?: Record<string, unknown>) {
@@ -87,24 +90,25 @@ export class EventTarget implements EventTarget {
         if (!isFunctionEventCallback(callback)) {
             return
         }
-        const index = this.#listeners.findIndex(matchEventCallback(type, callback, options))
-        if (index === -1) {
-            const externalIndex = this[EventTargetListeners]?.findIndex(matchEventCallback(type, callback, options));
-            if (externalIndex === -1) {
-                return;
-            }
-
-            return
+        const externalListeners = this[EventTargetListeners] ?? this.#listeners;
+        const externalIndex = externalListeners.findIndex(matchEventCallback(type, callback, options));
+        if (externalIndex === -1) {
+            return;
         }
-        this.#listeners.splice(index, 1)
+        const index = this.#listeners.findIndex(matchEventCallback(type, callback, options))
+        if (index !== -1) {
+            this.#listeners.splice(index, 1);
+        }
+        const descriptor = externalListeners[externalIndex];
+        if (descriptor) {
+            this.#ignoreExternalListener.add(descriptor);
+        }
     }
 
     async dispatchEvent(event: Event) {
-        const internalListeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
-        const externalListeners = (this[EventTargetListeners] ?? [])
-            ?.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
+        const listeners = (this[EventTargetListeners] ?? this.#listeners)
+            .filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
             .filter(descriptor => !this.#ignoreExternalListener.has(descriptor));
-        const listeners = [...internalListeners, ...externalListeners];
         await runWithSpanOptional(`event_dispatch`, { attributes: { type: event.type, listeners: listeners.length } }, async () => {
             // Don't even dispatch an aborted event
             if (isSignalEvent(event) && event.signal.aborted) {
