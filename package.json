@@ -37,7 +37,7 @@
     "node:example": "FETCH_SERVICE_PORT=8080 node --trace-warnings ./esnext/example/index.js",
     "deno:example": "deno run --unstable --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS ./deno/example/index.js",
     "deno:example:reload": "deno run --unstable --allow-net=:8080,:8081,cdn.skypack.dev,deno.land --import-map=./import-map-deno.json --location=\"https://fetch.spec.whatwg.org\" --allow-read --allow-env=FETCH_SERVICE_PORT,FLAGS --reload ./deno/example/index.js",
-    "coverage": "yarn build:base && c8 node ./esnext/example/index.js",
+    "coverage": "yarn build:base && c8 node ./esnext/example/index.js && yarn postbuild:base",
     "clean": "rm -rf esnext && rm -rf deno && rm -rf browser && rm -rf node_modules/.cache && rm -rf node_modules/.store"
   },
   "esm": {
@@ -51,7 +51,7 @@
   "dependencies": {
     "@edwardmx/noop": "^1.0.1",
     "@grpc/grpc-js": "^1.4.3",
-    "@opennetwork/environment": "^1.20.0",
+    "@opennetwork/environment": "^1.20.1",
     "@opennetwork/http-representation": "^3.0.0",
     "@opennetwork/http-representation-node": "^3.0.0",
     "@opennetwork/rdf-data-model": "^5.3.1",

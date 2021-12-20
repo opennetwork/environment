@@ -19,6 +19,11 @@ export interface EventTargetAddListenerOptions extends Pick<EventDescriptor, "on
 
 }
 
+/**
+ * @experimental
+ */
+export const EventTargetListeners = Symbol.for("@opennetwork/environment/events/target/listeners");
+
 export interface SyncEventTarget<Event = unknown, This = unknown> {
     addEventListener(type: string, callback: SyncEventCallback<Event, This>, options?: EventTargetAddListenerOptions): void
     removeEventListener(type: string, callback: SyncEventCallback<Event, This>, options?: unknown): void
@@ -30,6 +35,7 @@ export interface EventTarget<This = unknown> extends SyncEventTarget<Event, This
     removeEventListener(type: string, callback: Function, options?: unknown): void
     dispatchEvent(event: Event): void | Promise<void>
     hasEventListener(type: string, callback?: Function): Promise<boolean>
+    [EventTargetListeners]?: EventDescriptor[];
 }
 
 function isFunctionEventCallback(fn: Function): fn is EventCallback {
@@ -43,7 +49,9 @@ export type HasEventListenerFn = EventTarget["hasEventListener"]
 
 export class EventTarget implements EventTarget {
 
-    #listeners: EventDescriptor[] = []
+    #listeners: EventDescriptor[] = [];
+    #ignoreExternalListener = new WeakSet<EventDescriptor>();
+
     readonly #thisValue: unknown
     readonly #environment: Environment | undefined
 
@@ -81,14 +89,22 @@ export class EventTarget implements EventTarget {
         }
         const index = this.#listeners.findIndex(matchEventCallback(type, callback, options))
         if (index === -1) {
+            const externalIndex = this[EventTargetListeners]?.findIndex(matchEventCallback(type, callback, options));
+            if (externalIndex === -1) {
+                return;
+            }
+
             return
         }
         this.#listeners.splice(index, 1)
     }
 
     async dispatchEvent(event: Event) {
-        const listeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
-
+        const internalListeners = this.#listeners.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
+        const externalListeners = (this[EventTargetListeners] ?? [])
+            ?.filter(descriptor => descriptor.type === event.type || descriptor.type === "*")
+            .filter(descriptor => !this.#ignoreExternalListener.has(descriptor));
+        const listeners = [...internalListeners, ...externalListeners];
         await runWithSpanOptional(`event_dispatch`, { attributes: { type: event.type, listeners: listeners.length } }, async () => {
             // Don't even dispatch an aborted event
             if (isSignalEvent(event) && event.signal.aborted) {
