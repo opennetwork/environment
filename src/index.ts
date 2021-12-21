@@ -5,3 +5,4 @@ export * from "./runtime/runtime"
 export * from "./tracing/tracing"
 export * from "./flags/flags"
 export * from "./config/config"
+export * from "./fetch/index";

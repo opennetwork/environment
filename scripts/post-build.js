@@ -6,7 +6,7 @@ if (!process.env.NO_COVERAGE_BADGE_UPDATE) {
   const badges = [];
 
   badges.push(
-    `![nycrc config on GitHub](https://img.shields.io/nycrc/virtualstate/x)`
+    `![nycrc config on GitHub](https://img.shields.io/nycrc/opennetwork/environment)`
   )
 
   const coverage = await fs.readFile("coverage/coverage-summary.json", "utf8").then(JSON.parse).catch(() => ({}));

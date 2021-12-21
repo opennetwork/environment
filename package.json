@@ -7,7 +7,9 @@
   "types": "./esnext/index.d.ts",
   "exports": {
     ".": "./esnext/index.js",
-    "./esnext/runtime/run.js": "./esnext/runtime/run.js"
+    "./esnext/runtime/run.js": "./esnext/runtime/run.js",
+    "./esnext/fetch/fetch.js": "./esnext/fetch/fetch.js",
+    "./fetch": "./esnext/fetch/fetch.js"
   },
   "author": "Fabian Cook <hello@fabiancook.dev>",
   "license": "MIT",
