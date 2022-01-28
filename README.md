@@ -4,7 +4,7 @@ Cross platform JavaScript environment
 
 [//]: # (badges)
 
-![nycrc config on GitHub](https://img.shields.io/nycrc/virtualstate/x) ![41.56%25 lines covered](https://img.shields.io/badge/lines-41.56%25-yellow) ![41.56%25 statements covered](https://img.shields.io/badge/statements-41.56%25-yellow) ![53.1%25 functions covered](https://img.shields.io/badge/functions-53.1%25-yellow) ![70.6%25 branches covered](https://img.shields.io/badge/branches-70.6%25-yellow)
+![nycrc config on GitHub](https://img.shields.io/nycrc/opennetwork/environment)
 
 [//]: # (badges)
 

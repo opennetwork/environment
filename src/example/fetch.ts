@@ -42,7 +42,12 @@ addFetchEventListener({ method: /(GET|PUT)/, pathname: /^\/(data|browser-data|te
         new Response(JSON.stringify({
             data: "value!",
             pathname
-        }), { status: 200 })
+        }), {
+            status: 200,
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
     )
 });
 
